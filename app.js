@@ -2,14 +2,9 @@
 var http = require("http"),
     url = require("url"),
     path = require("path"),
-    fs = require("fs"),
-    port = process.env.PORT || 3000,
-
+    fs = require("fs")
+    port = process.env.PORT || 80,
     prefix = '/www';
-
-var wsPort = 8080;
-var WebSocketServer = require('ws').Server;
-var wss = new WebSocketServer({port: wsPort});
  
 http.createServer(function(request, response) {
  
@@ -40,11 +35,3 @@ http.createServer(function(request, response) {
     });
   });
 }).listen(parseInt(port, 10));
-
-
-wss.on('connection', function(websocket) {
-  console.log('websocket request on:', websocket.upgradeReq.url);
-  if (websocket.upgradeReq.url === '/load') {
-    console.log('/load');
-  }
-});
