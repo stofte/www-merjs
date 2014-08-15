@@ -1,0 +1,15 @@
+{
+    "folders":
+    [
+        {
+            "file_include_patterns": ["*.js", "*.json", "*.html", "*.sublime-project", "*.css"],
+            "folder_exclude_patterns": ["node_modules", ".elasticbeanstalk"],
+            "path": "."
+        }
+    ],
+    "settings":
+    {
+        "translate_tabs_to_spaces": true,
+        "tab_size": 4
+    }
+}
