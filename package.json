@@ -1,18 +1,8 @@
 {
-    "name": "web-merjs",
-    "main": "gruntfile.js",
-    "engines": {
-        "node": ">=0.10.0"
-    },
+    "name": "www-merjs",
     "version": "0.0.1",
     "private": true,
     "dependencies": {
         "ws": "~0.4.31"
-    },
-    "devDependencies": {
-        "grunt": "~0.4.0",
-        "grunt-contrib-watch": "~0.2.0",
-        "grunt-contrib-connect": "~0.1.2",
-        "grunt-contrib-compress": "0.10.0"
     }
 }

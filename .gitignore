@@ -1,4 +1,4 @@
 node_modules
 .elasticbeanstalk/config
 
-*.zip
+*.zip
