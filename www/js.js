@@ -14,6 +14,12 @@
     var hoverCtx =  hover.getContext('2d');
     var data = null; // contains char data and x/y
 
+    var hoverIdx = -1;
+    var dragging = false;
+    var hoverX = -1;
+    var hoverY = -1;
+    var dragImg = null;
+
     var detect = function(x, y) {
         for (var j = 0; j < data.length; j++) {
             var hit = 0;
@@ -42,14 +48,17 @@
     };
 
     function hoverHandler(e) {
+        if (dragging) return;
         var x = width/canvas.clientWidth*Math.max(0, Math.min(e.x - canvas.offsetLeft - 1, width));
         var y = height/canvas.clientHeight*Math.max(0, Math.min(e.y - canvas.offsetTop - 1, height));
         var idx = detect(x, y);
         dragCtx.clearRect(-300, 0, width*2, height*2);
         hoverCtx.clearRect(-300, 0, width*2, height*2);
         if (idx < 0) {
+            hoverIdx = -1;
             return;
         }
+        hoverIdx = idx;
         hoverCtx.strokeStyle = 'orangered';
         hoverCtx.lineWidth = 25;
         hoverCtx.strokeText(data[idx].c, data[idx].y, data[idx].x);
@@ -58,12 +67,39 @@
         hoverCtx.strokeText(data[idx].c, data[idx].y, data[idx].x);
         hoverCtx.fillStyle = 'gold';
         hoverCtx.fillText(data[idx].c, data[idx].y, data[idx].x);
-        // dragCtx.fillStyle = 'rgba(255, 0, 0, 255)';
-        // dragCtx.fillRect(data[idx].y, data[idx].x, 10, 10);
+    }
+
+    function dragHandler(e) {
+        if (!dragging) return;
+        var x = e.x - hoverX;
+        var y = e.y - hoverY;
+        dragger.style.bottom = -1*y+'px';
+        dragger.style.right = -1*x+'px';
     }
 
     function dragendHandler(e) {
-        console.log('dragHandler', arguments);
+        dragging = false;
+        dragger.style.right = 0;
+        dragger.style.bottom = 0;
+        hoverHandler(e); // might redraw hover
+    }
+
+    function dragstartHandler(e) {
+        if (hoverIdx < 0) return;
+        dragging = true;
+        hoverX = e.x;
+        hoverY = e.y;
+        var hoverData = hover.toDataURL();//.getImageData(0, 0, width, height);
+        var img = new Image();
+        img.onload = function() {
+            hoverCtx.clearRect(-300, 0, width*2, height*2);            
+            dragCtx.clearRect(-300, 0, width*2, height*2);
+            dragger.style.right = 0;
+            dragger.style.bottom = 0;
+            dragImg = this;
+            dragCtx.drawImage(this, 0, 0);
+        };
+        img.src = hoverData;
     }
 
     function start() {
@@ -71,7 +107,7 @@
         styleCtx(ctx);
         styleCtx(dragCtx);
         styleCtx(hoverCtx, true);
-        dragger.fillStyle = 'red';
+        dragCtx.rotate(0.2);
         for (var i = data.length-1; i > -1; i--) {
             styleCtx(data[i].canvas, true);
             data[i].canvas.lineWidth = 22;
@@ -79,8 +115,10 @@
             ctx.fillText(data[i].c, data[i].y, data[i].x);
             data[i].canvas.strokeText(data[i].c, data[i].y, data[i].x);
         }
-        // dragger.addEventListener('mouseup', dragendHandler);
         dragger.addEventListener('mousemove', hoverHandler);
+        dragger.addEventListener('mousemove', dragHandler);
+        dragger.addEventListener('mousedown', dragstartHandler);
+        dragger.addEventListener('mouseup', dragendHandler);
     }
 
     function init(e) {
