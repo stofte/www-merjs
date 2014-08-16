@@ -2,6 +2,7 @@
 
 html, body {
     background-color: gold;
+    background: linear-gradient(to bottom, gold 0%, orange 100%);
     height: 100%;
     overflow: hidden;
     text-align: center;
@@ -19,7 +20,8 @@ html, body {
     height: 100%;
 }
 
-#logo {
+#logo, #logo-bg, #dragger, #hover {
+    border: 1px solid red;
     position: absolute;
     bottom: 0;
     right: 0;
@@ -32,7 +34,7 @@ html, body {
         height: 100%;
     }
 
-    #logo {
+    #logo, #logo-bg, #dragger, #hover {
         width: auto;
         max-height: 100%;
     }

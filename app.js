@@ -9,6 +9,30 @@ var http = require("http"),
 var wsPort = 8080;
 var WebSocketServer = require('ws').Server;
 var wss = new WebSocketServer({port: wsPort});
+
+var id = 0;
+var textData = [
+  {x: 460, y: 26, c: 'm', id: id++ },
+  {x: 460, y: 122, c: 'e', id: id++ },
+  {x: 460, y: 199, c: 'd', id: id++ },
+
+  {x: 460, y: 344, c: 'm', id: id++ },
+  {x: 460, y: 441, c: 'e', id: id++ },
+  {x: 460, y: 505, c: 'r', id: id++ },
+  {x: 460, y: 570, c: 'e', id: id++ },
+
+  {x: 460, y: 685, c: 'J', id: id++ },
+  {x: 460, y: 775, c: 'a', id: id++ },
+  {x: 460, y: 855, c: 'v', id: id++ },
+  {x: 460, y: 934, c: 'a', id: id++ },
+  {x: 460, y: 1027, c: 'S', id: id++ },
+  {x: 460, y: 1108, c: 'c', id: id++ },
+  {x: 460, y: 1172, c: 'r', id: id++ },
+  {x: 460, y: 1227, c: 'i', id: id++ },
+  {x: 460, y: 1290, c: 'p', id: id++ },
+  {x: 460, y: 1352, c: 't', id: id++ },
+  {x: 460, y: 1396, c: '!', id: id++ }
+];
  
 http.createServer(function(request, response) {
  
@@ -44,6 +68,7 @@ http.createServer(function(request, response) {
 wss.on('connection', function(websocket) {
   console.log('websocket request on:', websocket.upgradeReq.url);
   if (websocket.upgradeReq.url === '/load') {
-    console.log('/load');
+    var data = JSON.stringify(textData);
+    websocket.send(data);
   }
 });
