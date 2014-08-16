@@ -29,6 +29,10 @@ html, body {
     max-width: 100%;
 }
 
+#hover {
+    opacity: 0.4;
+}
+
 @media all and (max-height: 500px) {
     .logo-box {
         height: 100%;

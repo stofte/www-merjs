@@ -1,20 +1,34 @@
 (function() {
     'use strict';
 
+    var height = 500;
+    var width = 1500;
     var canvas = document.getElementById('logo');
     var bgCanvas = document.getElementById('logo-bg');
     var dragger = document.getElementById('dragger');
+    var hover = document.getElementById('hover');
+
     var bgCtx = bgCanvas.getContext('2d');
     var ctx = canvas.getContext('2d');
     var dragCtx = dragger.getContext('2d');
+    var hoverCtx =  hover.getContext('2d');
+    var data = null; // contains char data and x/y
 
-    var text = 'medmereJavaScript!'.split('');
-    var initialYs = [
-        26, 122, 199, 
-        344, 441, 505, 570,
-        685, 775, 855, 934, 
-        1027, 1108, 1172, 1227, 1290, 1352, 1396
-    ];
+    var detect = function(x, y) {
+        for (var j = 0; j < data.length; j++) {
+            var hit = 0;
+            var pix = data[j].canvas.getImageData(x, y, 2, 2).data;
+            for (var i = 0; i < pix.length; i+= 4) {
+                if (pix[i] > 0 || pix[i+1] > 0 || pix[i+2] > 0 || pix[i+3] > 0) {
+                    hit++;
+                }
+            }
+            if (hit > 2) {
+                return j;
+            }
+        }
+        return -1;
+    };
 
     var styleCtx = function(ctx, bg) {
         ctx.font = '170px Lobster';
@@ -27,45 +41,62 @@
         }
     };
 
-    function dragstartHandler(e) {
-        var x = 1500/canvas.clientWidth*Math.max(0, Math.min(e.x - canvas.offsetLeft - 1, 1500));
-        var y = 500/canvas.clientHeight*Math.max(0, Math.min(e.y - canvas.offsetTop - 1, 500));
-        var pix = bgCtx.getImageData(x, y, 2, 2).data;
-        var hit = 0;
-        for (var i = 0; i < pix.length; i+= 4) {
-            if (pix[i] > 0 || pix[i+1] > 0 || pix[i+2] > 0 || pix[i+3] > 0) {
-                hit++;
-            }
+    function hoverHandler(e) {
+        var x = width/canvas.clientWidth*Math.max(0, Math.min(e.x - canvas.offsetLeft - 1, width));
+        var y = height/canvas.clientHeight*Math.max(0, Math.min(e.y - canvas.offsetTop - 1, height));
+        var idx = detect(x, y);
+        dragCtx.clearRect(-300, 0, width*2, height*2);
+        hoverCtx.clearRect(-300, 0, width*2, height*2);
+        if (idx < 0) {
+            return;
         }
-        if (hit > 2) {
-            // detect what letter was hit
-            console.log('hitting');
-        }
+        hoverCtx.strokeStyle = 'orangered';
+        hoverCtx.lineWidth = 25;
+        hoverCtx.strokeText(data[idx].c, data[idx].y, data[idx].x);
+        hoverCtx.strokeStyle = 'white';
+        hoverCtx.lineWidth = 17;
+        hoverCtx.strokeText(data[idx].c, data[idx].y, data[idx].x);
+        hoverCtx.fillStyle = 'gold';
+        hoverCtx.fillText(data[idx].c, data[idx].y, data[idx].x);
+        // dragCtx.fillStyle = 'rgba(255, 0, 0, 255)';
+        // dragCtx.fillRect(data[idx].y, data[idx].x, 10, 10);
     }
 
     function dragendHandler(e) {
-
         console.log('dragHandler', arguments);
     }
 
-    function start(data) {
+    function start() {
         styleCtx(bgCtx, true);
         styleCtx(ctx);
         styleCtx(dragCtx);
+        styleCtx(hoverCtx, true);
         dragger.fillStyle = 'red';
-        for (var i = 0; i < data.length; i++) {
+        for (var i = data.length-1; i > -1; i--) {
+            styleCtx(data[i].canvas, true);
+            data[i].canvas.lineWidth = 22;
             bgCtx.strokeText(data[i].c, data[i].y, data[i].x);
             ctx.fillText(data[i].c, data[i].y, data[i].x);
+            data[i].canvas.strokeText(data[i].c, data[i].y, data[i].x);
         }
-        dragger.addEventListener('mouseup', dragendHandler);
-        dragger.addEventListener('mousemove', dragstartHandler);
+        // dragger.addEventListener('mouseup', dragendHandler);
+        dragger.addEventListener('mousemove', hoverHandler);
+    }
+
+    function init(e) {
+        data = JSON.parse(e.data);
+        for(var i = 0; i < data.length; i++) {
+            // elm is used to do hit detection
+            var elm = document.createElement('canvas');
+            elm.width = width;
+            elm.height = height;
+            data[i].canvas = elm.getContext('2d');
+        }
+        start();
     }
 
     document.documentElement.addEventListener('font-loaded', function() {
         var loadSocket = new WebSocket('ws://localhost:8080/load');
-        loadSocket.onmessage = function(e) {
-            var data = JSON.parse(e.data);
-            start(data);
-        };
+        loadSocket.onmessage = init;
     });
 })();
