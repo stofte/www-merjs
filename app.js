@@ -37,7 +37,14 @@ http.createServer(function(request, response) {
  
   var uri = url.parse(request.url).pathname
     , filename = path.join(process.cwd() + prefix, uri);
- 
+
+  if (uri === '/data.js') {
+    response.writeHead(200, {"Content-Type": "text/javascript"});
+    response.write('var data = ' + JSON.stringify(textData) + ';');
+    response.end();    
+    return;
+  }
+
   fs.exists(filename, function(exists) {
     if(!exists) {
       response.writeHead(404, {"Content-Type": "text/plain"});
@@ -49,7 +56,7 @@ http.createServer(function(request, response) {
     if (fs.statSync(filename).isDirectory()) filename += '/index.html';
  
     fs.readFile(filename, "binary", function(err, file) {
-      if(err) {        
+      if(err) {
         response.writeHead(500, {"Content-Type": "text/plain"});
         response.write(err + "\n");
         response.end();
@@ -64,10 +71,26 @@ http.createServer(function(request, response) {
 }).listen(parseInt(port, 10));
 
 
+var clients = [];
+var clientId = 0;
 wss.on('connection', function(websocket) {
+  websocket.clientId = clientId++;
+  clients.push(websocket);
   console.log('websocket request on:', websocket.upgradeReq.url);
-  if (websocket.upgradeReq.url === '/load') {
-    var data = JSON.stringify(textData);
-    websocket.send(data);
+  if (websocket.upgradeReq.url === '/chat') {
+    console.log(JSON.stringify({data: textData, clientId: websocket.clientId}));
+    websocket.send(JSON.stringify({cmd: 'load', text: textData, clientId: websocket.clientId}));
+    websocket.on('message', function(msg) {
+      var data = JSON.parse(msg);
+      if (data.cmd === 'move') {
+        console.log('move cmd received on socket#', websocket.clientId);
+        clients.forEach(function(socket) {
+          if (socket.clientId !== websocket.clientId && socket.readyState === 1) { // 1 = OPEN
+            console.log('sending move to other client#', socket.clientId);
+            socket.send(msg);
+          }
+        });
+      }
+    });
   }
 });

@@ -1,6 +1,11 @@
 (function() {
     'use strict';
 
+    // strive to smoothen out loading issues when major features are in place
+    console.time('main');
+    console.time('font-loaded');
+    console.time('json-parsed');
+
     var height = 500;
     var width = 1500;
     var canvas = document.getElementById('logo');
@@ -11,7 +16,8 @@
     var dragCtx = dragger.getContext('2d');
     var hoverCtx =  hover.getContext('2d');
 
-    var data = null; // contains char data and x/y
+    var clientId = null;
+    var text = null; // contains char data and x/y
     var hoverData = null;
     var dragging = false;
     var hoverIdx = -1;
@@ -19,12 +25,19 @@
     var dragY = -1;
 
     function extent(ctx) {
-        return [];
+        var pix = ctx.getImageData(0, 0, width, height).data;
+        for (var i = 0; i < pix.length; i+= 4) {
+            if (pix[i] > 0 || pix[i+1] > 0 || pix[i+2] > 0 || pix[i+3] > 0) {
+                hit++;
+            }
+        }
+
+        return {top: 0, bottom: 0, left: 0, right: 0};
     }
 
     function detect(x, y) {
         var match = -1;
-        data.forEach(function(letter, idx) {
+        text.forEach(function(letter, idx) {
             var hit = 0;
             var pix = letter.ctx.getImageData(x, y, 2, 2).data;
 
@@ -46,10 +59,11 @@
 
     function render(exclude) {
         clearCtx(ctx);
-        data.forEach(function(elm, i) {
+        text.forEach(function(elm, i) {
             if (exclude === i) return;
             ctx.drawImage(elm.img, elm.y2, elm.x2);
         });
+
     }
 
     function hoverHandler(e) {
@@ -60,13 +74,13 @@
         hoverIdx = idx;
         clearCtx(hoverCtx);
         if (idx > -1) {
-            hoverCtx.drawImage(data[idx].imgBg, data[idx].y2, data[idx].x2);
+            hoverCtx.drawImage(text[idx].imgBg, text[idx].y2, text[idx].x2);
         }
     }    
 
     function dragstartHandler(e) {
         if (hoverIdx < 0) return;
-        hoverData = data.splice(hoverIdx, 1)[0];
+        hoverData = text.splice(hoverIdx, 1)[0];
         dragging = true;
         dragX = e.x;
         dragY = e.y;
@@ -86,7 +100,7 @@
         clearCtx(hoverCtx);
         clearCtx(hoverData.ctx);
         hoverData.ctx.drawImage(hoverData.img, hoverData.y2, hoverData.x2); 
-        data.push(hoverData); // moves letter to top of stack
+        text.push(hoverData); // moves letter to top of stack
         hoverData = null;
         render();
         hoverHandler(e); // might redraw hover shadow
@@ -100,12 +114,29 @@
         console.log('x/y',x,y);
         dragger.style.bottom = -1*y+'px';
         dragger.style.right = -1*x+'px';
+        chatSocket.send(JSON.stringify({cmd: 'move', letter: hoverIdx, bottom: -1*y+'px', right: -1*x+'px'}))
     }    
 
-    function init(e) {
-        data = JSON.parse(e.data);
+    function moveHandler(data) {
+
+    }
+
+    function chatHandler(e) {
+        var data = JSON.parse(e.data);
+        console.timeEnd('json-parsed');
+        if (data.cmd === 'load') {
+            init(data);
+        } else if (data.cmd === 'move') {
+            console.log('moveHandler', data);
+        }
+    }
+
+    function init(data) {
+        clientId = data.clientId;
+        text = data.text;
+        console.log('clientId', clientId);
         var container = document.querySelector('.logo-boxx');
-        data.forEach(function(letter, i) {
+        text.forEach(function(letter, i) {
             // create individual letters
             var elm = document.createElement('canvas');
             elm.width = width;
@@ -148,12 +179,16 @@
             document.documentElement.addEventListener('mousemove', dragHandler);
             document.documentElement.addEventListener('mouseup', dragendHandler);
             dragger.addEventListener('mousedown', dragstartHandler);
-        }, 100); 
+            console.timeEnd('main');
+        }, 100);
     }
 
-    // inccurs alot of queued waits, font -> websocket -> canvas
+    var fontLoaded = false;
     document.documentElement.addEventListener('font-loaded', function() {
-        var loadSocket = new WebSocket('ws://localhost:8080/load');
-        loadSocket.onmessage = init;
+        fontLoaded = true;
+        console.timeEnd('font-loaded');
     });
+
+    var chatSocket = new WebSocket('ws://localhost:8080/chat');
+    chatSocket.onmessage = chatHandler;
 })();

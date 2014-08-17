@@ -12,7 +12,6 @@
     var timer = setInterval(function() {
         if (initialW !== elm.offsetWidth) {
             clearInterval(timer);
-            console.log('firing event');
             document.documentElement.dispatchEvent(new Event('font-loaded'));
         }
     });
