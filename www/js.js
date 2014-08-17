@@ -4,135 +4,154 @@
     var height = 500;
     var width = 1500;
     var canvas = document.getElementById('logo');
-    var bgCanvas = document.getElementById('logo-bg');
     var dragger = document.getElementById('dragger');
     var hover = document.getElementById('hover');
 
-    var bgCtx = bgCanvas.getContext('2d');
     var ctx = canvas.getContext('2d');
     var dragCtx = dragger.getContext('2d');
     var hoverCtx =  hover.getContext('2d');
+
     var data = null; // contains char data and x/y
-
-    var hoverIdx = -1;
+    var hoverData = null;
     var dragging = false;
-    var hoverX = -1;
-    var hoverY = -1;
-    var dragImg = null;
+    var hoverIdx = -1;
+    var dragX = -1;
+    var dragY = -1;
 
-    var detect = function(x, y) {
-        for (var j = 0; j < data.length; j++) {
+    function extent(ctx) {
+        return [];
+    }
+
+    function detect(x, y) {
+        var match = -1;
+        data.forEach(function(letter, idx) {
             var hit = 0;
-            var pix = data[j].canvas.getImageData(x, y, 2, 2).data;
+            var pix = letter.ctx.getImageData(x, y, 2, 2).data;
+
             for (var i = 0; i < pix.length; i+= 4) {
                 if (pix[i] > 0 || pix[i+1] > 0 || pix[i+2] > 0 || pix[i+3] > 0) {
                     hit++;
                 }
             }
             if (hit > 2) {
-                return j;
+                match = idx;
             }
-        }
-        return -1;
-    };
+        })
+        return match;
+    }
 
-    var styleCtx = function(ctx, bg) {
-        ctx.font = '170px Lobster';
-        ctx.rotate(-0.2);
-        ctx.textAlign = 'center';
-        ctx.fillStyle = bg ? 'white' : 'gold';
-        if (bg) {
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 17;
-        }
-    };
+    function clearCtx(ctx) {
+        ctx.clearRect(-300, 0, width*2, height*2);
+    }
+
+    function render(exclude) {
+        clearCtx(ctx);
+        data.forEach(function(elm, i) {
+            if (exclude === i) return;
+            ctx.drawImage(elm.img, elm.y2, elm.x2);
+        });
+    }
 
     function hoverHandler(e) {
         if (dragging) return;
         var x = width/canvas.clientWidth*Math.max(0, Math.min(e.x - canvas.offsetLeft - 1, width));
         var y = height/canvas.clientHeight*Math.max(0, Math.min(e.y - canvas.offsetTop - 1, height));
         var idx = detect(x, y);
-        dragCtx.clearRect(-300, 0, width*2, height*2);
-        hoverCtx.clearRect(-300, 0, width*2, height*2);
-        if (idx < 0) {
-            hoverIdx = -1;
-            return;
-        }
         hoverIdx = idx;
-        hoverCtx.strokeStyle = 'orangered';
-        hoverCtx.lineWidth = 25;
-        hoverCtx.strokeText(data[idx].c, data[idx].y, data[idx].x);
-        hoverCtx.strokeStyle = 'white';
-        hoverCtx.lineWidth = 17;
-        hoverCtx.strokeText(data[idx].c, data[idx].y, data[idx].x);
-        hoverCtx.fillStyle = 'gold';
-        hoverCtx.fillText(data[idx].c, data[idx].y, data[idx].x);
-    }
+        clearCtx(hoverCtx);
+        if (idx > -1) {
+            hoverCtx.drawImage(data[idx].imgBg, data[idx].y2, data[idx].x2);
+        }
+    }    
 
-    function dragHandler(e) {
-        if (!dragging) return;
-        var x = e.x - hoverX;
-        var y = e.y - hoverY;
-        dragger.style.bottom = -1*y+'px';
-        dragger.style.right = -1*x+'px';
+    function dragstartHandler(e) {
+        if (hoverIdx < 0) return;
+        hoverData = data.splice(hoverIdx, 1)[0];
+        dragging = true;
+        dragX = e.x;
+        dragY = e.y;
+        render();
+        clearCtx(dragCtx);
+        clearCtx(hoverCtx);
+        dragCtx.drawImage(hoverData.imgBg, hoverData.y2, hoverData.x2);
     }
 
     function dragendHandler(e) {
         dragging = false;
         dragger.style.right = 0;
         dragger.style.bottom = 0;
-        hoverHandler(e); // might redraw hover
+        hoverData.y2 += width/canvas.clientWidth*(e.x - dragX);
+        hoverData.x2 += height/canvas.clientHeight*(e.y - dragY);
+        clearCtx(dragCtx);
+        clearCtx(hoverCtx);
+        clearCtx(hoverData.ctx);
+        hoverData.ctx.drawImage(hoverData.img, hoverData.y2, hoverData.x2); 
+        data.push(hoverData); // moves letter to top of stack
+        hoverData = null;
+        render();
+        hoverHandler(e); // might redraw hover shadow
     }
 
-    function dragstartHandler(e) {
-        if (hoverIdx < 0) return;
-        dragging = true;
-        hoverX = e.x;
-        hoverY = e.y;
-        var hoverData = hover.toDataURL();//.getImageData(0, 0, width, height);
-        var img = new Image();
-        img.onload = function() {
-            hoverCtx.clearRect(-300, 0, width*2, height*2);            
-            dragCtx.clearRect(-300, 0, width*2, height*2);
-            dragger.style.right = 0;
-            dragger.style.bottom = 0;
-            dragImg = this;
-            dragCtx.drawImage(this, 0, 0);
-        };
-        img.src = hoverData;
-    }
+    function dragHandler(e) {
+        if (!dragging) return;
+        var x = e.x - dragX;
+        var y = e.y - dragY;
 
-    function start() {
-        styleCtx(bgCtx, true);
-        styleCtx(ctx);
-        styleCtx(dragCtx);
-        styleCtx(hoverCtx, true);
-        dragCtx.rotate(0.2);
-        for (var i = data.length-1; i > -1; i--) {
-            styleCtx(data[i].canvas, true);
-            data[i].canvas.lineWidth = 22;
-            bgCtx.strokeText(data[i].c, data[i].y, data[i].x);
-            ctx.fillText(data[i].c, data[i].y, data[i].x);
-            data[i].canvas.strokeText(data[i].c, data[i].y, data[i].x);
-        }
-        dragger.addEventListener('mousemove', hoverHandler);
-        dragger.addEventListener('mousemove', dragHandler);
-        dragger.addEventListener('mousedown', dragstartHandler);
-        dragger.addEventListener('mouseup', dragendHandler);
-    }
+        console.log('x/y',x,y);
+        dragger.style.bottom = -1*y+'px';
+        dragger.style.right = -1*x+'px';
+    }    
 
     function init(e) {
         data = JSON.parse(e.data);
-        for(var i = 0; i < data.length; i++) {
-            // elm is used to do hit detection
+        var container = document.querySelector('.logo-boxx');
+        data.forEach(function(letter, i) {
+            // create individual letters
             var elm = document.createElement('canvas');
             elm.width = width;
             elm.height = height;
-            data[i].canvas = elm.getContext('2d');
-        }
-        start();
+            var ctx = elm.getContext('2d');
+            ctx.font = '170px Lobster';
+            ctx.rotate(-0.2);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'gold';
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 17;
+            ctx.strokeText(letter.c, letter.y, letter.x);
+            ctx.fillText(letter.c, letter.y, letter.x);
+            var img = new Image();
+            img.onload = function() { 
+                letter.img = this;
+                // create bg
+                clearCtx(ctx);
+                ctx.strokeStyle = 'orangered';
+                ctx.lineWidth = 22;
+                ctx.strokeText(letter.c, letter.y, letter.x);
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 17;
+                ctx.strokeText(letter.c, letter.y, letter.x);
+                ctx.fillText(letter.c, letter.y, letter.x);
+                var img2 = new Image();
+                img2.onload = function() { 
+                    ctx.rotate(0.2);
+                    letter.imgBg = this; 
+                };
+                img2.src = elm.toDataURL();
+            };
+            img.src = elm.toDataURL();
+            letter.ctx = ctx;
+        });
+        // allow some time to render all letters
+        setTimeout(function() {
+            render()
+            document.documentElement.addEventListener('mousemove', hoverHandler);
+            document.documentElement.addEventListener('mousemove', dragHandler);
+            document.documentElement.addEventListener('mouseup', dragendHandler);
+            dragger.addEventListener('mousedown', dragstartHandler);
+        }, 100); 
     }
 
+    // inccurs alot of queued waits, font -> websocket -> canvas
     document.documentElement.addEventListener('font-loaded', function() {
         var loadSocket = new WebSocket('ws://localhost:8080/load');
         loadSocket.onmessage = init;

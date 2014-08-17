@@ -20,7 +20,7 @@ html, body {
     height: 100%;
 }
 
-#logo, #logo-bg, #dragger, #hover {
+#logo, #logo-bg, #dragger, #hover, #board, .letter {
     border: 1px solid red;
     position: absolute;
     bottom: 0;
@@ -38,7 +38,7 @@ html, body {
         height: 100%;
     }
 
-    #logo, #logo-bg, #dragger, #hover {
+    #logo, #logo-bg, #dragger, #hover, .letter, #board {
         width: auto;
         max-height: 100%;
     }
