@@ -1,9 +1,9 @@
+var http = require('http');
+var faye = require('faye');
+var simpleHttp = require('./simple-http');
 
-var http = require('http'),
-    faye = require('faye'),
-    simpleHttp = require('./simple-http'),
-    port = process.env.PORT || 80,
-    prefix = '/www';
+var prefix = '/www';
+var port = process.env.PORT || 80;
 
 var id = 0;
 var textData = [
@@ -29,15 +29,10 @@ var textData = [
   {x: 460, y: 1396, c: '!', x2: 0, y2: 0, id: id++ }
 ];
  
-Array.prototype.shiftIndex = function(i) {
-  this.push(this.splice(i, 1)[0]);
-};
-
-
 function pushUpdate(cmd, index) {
   var data = { item: textData[index], index: index, cmd: cmd };
   if (cmd === 'grab') { 
-    textData.shiftIndex(index); // client must do the same thing
+    textData.push(textData.splice(index, 1)[0]); // client must do the same thing
   }
   fayeServer.getClient().publish('/data/update', data);    
 }

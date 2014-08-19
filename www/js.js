@@ -1,8 +1,6 @@
 (function() {
     'use strict';
-    Array.prototype.shiftIndex = function(i) {
-      this.push(this.splice(i, 1)[0]);
-    };
+
     console.time('font-loaded');
 
     var height = 500;
@@ -252,7 +250,7 @@
         textData[msg.index] = msg.item;
         if (msg.cmd === 'grab') {
             // if the item was grabbed, shift it to end
-            textData.shiftIndex(msg.index);
+            textData.push(textData.splice(msg.index, 1)[0]);
         } else if (msg.cmd === 'drop') { 
             // when dropped we want to recompute the hit detection context
             textData.forEach(fixLetterGraphics);
