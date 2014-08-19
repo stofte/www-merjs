@@ -1,45 +1,175 @@
 (function() {
     'use strict';
-
-    // strive to smoothen out loading issues when major features are in place
-    console.time('main');
+    Array.prototype.shiftIndex = function(i) {
+      this.push(this.splice(i, 1)[0]);
+    };
     console.time('font-loaded');
-    console.time('json-parsed');
 
     var height = 500;
     var width = 1500;
     var canvas = document.getElementById('logo');
-    var dragger = document.getElementById('dragger');
     var hover = document.getElementById('hover');
+    var grabbed = document.getElementById('grabbed');
+    // var others = document.getElementById('others');
 
     var ctx = canvas.getContext('2d');
-    var dragCtx = dragger.getContext('2d');
     var hoverCtx =  hover.getContext('2d');
+    var grabCtx = grabbed.getContext('2d');
+    // var othersCtx = others.getContext('2d');
 
-    var clientId = null;
-    var text = null; // contains char data and x/y
-    var hoverData = null;
+    // copy of the textData structure received from the server
+    var textData = null;
+    // contains ctx for hit detection. updated client side when the corrosponding
+    // element in text array is updated. { id: { ctx: ctx, img: img, imgBg: imgBg } }
+    var graphics = {};
+    var focusItem = null; // text item being hovered/dragged locally
+    
+    // dragging state
     var dragging = false;
-    var hoverIdx = -1;
+    var dragAssumption = false; // true if we've assumed grab of focusItem only
     var dragX = -1;
     var dragY = -1;
+    
+    // faye ws client
+    var wsClient = new Faye.Client('http://localhost:8080/ws');
+    var clientId = guid(); // todo need a better way to generate id
 
-    function extent(ctx) {
-        var pix = ctx.getImageData(0, 0, width, height).data;
-        for (var i = 0; i < pix.length; i+= 4) {
-            if (pix[i] > 0 || pix[i+1] > 0 || pix[i+2] > 0 || pix[i+3] > 0) {
-                hit++;
+
+    function boundingBox(data) {
+        // O(n) rough approx
+        var i = 0;
+        var top = -1;
+        var bottom = -1;
+        var left = -1;
+        var right = -1;
+        var tmp = -1;
+        var step = 7;
+        
+        while (i < data.length) {
+            if (data[i] != 0 || data[i+1] != 0 || data[i+2] != 0 || data[i+3] != 0) {
+                var x = (i/4)%width;
+                var y = Math.floor((i/4)/width);
+                if (top === -1) {
+                    top = y;
+                } else {
+                    bottom = y;
+                }
+                // updates sides
+                if (x < left || left === -1) left = x;
+                if (x > right || right === -1) right = x;
             }
+            i += 4*step;
         }
 
-        return {top: 0, bottom: 0, left: 0, right: 0};
+        return {
+            top: top, 
+            right: right, 
+            bottom: bottom, 
+            left: left  
+        };
     }
 
+
+    function generateLetter(letter) {
+        graphics[letter.id] = {};
+        var elm = document.createElement('canvas');
+        elm.width = width;
+        elm.height = height;
+        var ctx = elm.getContext('2d');
+        ctx.font = '170px Lobster';
+        ctx.rotate(-0.2);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'gold';
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 17;
+        ctx.strokeText(letter.c, letter.y, letter.x);
+        ctx.fillText(letter.c, letter.y, letter.x);
+        var bb = boundingBox(ctx.getImageData(0, 0, width, height).data);
+        console.log(bb)
+        var img = new Image();
+        img.onload = function() { 
+            graphics[letter.id].img = this;
+            // create bg
+            clearCtx(ctx);
+            ctx.strokeStyle = 'orangered';
+            ctx.lineWidth = 40;
+            ctx.strokeText(letter.c, letter.y, letter.x);
+
+            // var pixs = ctx.getImageData(0, 0, width, height);
+            // var gen_bb = function(w) {
+            //     var bb = [];
+            //     for (var i = 0; i < w*w; i++) {
+            //         bb.push(1/(w*w))
+            //     }
+            //     return bb;
+            // };
+            // var bb = gen_bb(6);
+            // var blurBox = [ 1/9, 1/9, 1/9,
+            //                 1/9, 1/9, 1/9,
+            //                 1/9, 1/9, 1/9 ];
+            stackBlurCanvasRGBA(elm, 0, 0, width, height, 15);
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 23;
+            ctx.strokeText(letter.c, letter.y, letter.x);
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 17;
+            ctx.strokeText(letter.c, letter.y, letter.x);
+            ctx.fillText(letter.c, letter.y, letter.x);
+
+            // var blurred = Filters.convolute(Filters.convolute(pixs, bb), bb);
+            // console.log(blurred, ctx.drawImage(pixs, 0, 0));
+            // ctx.putImageData(blurred, 0, 0, 0, 0, width, height);
+            var img2 = new Image();
+            img2.onload = function() { 
+                // resets rotation as from this point we will just be using
+                // the images and background images.
+                ctx.rotate(0.2);
+                graphics[letter.id].imgBg = this;
+                // save the offset we render at, so we know when the server updates
+                graphics[letter.id].x2 = letter.x2;
+                graphics[letter.id].y2 = letter.y2;
+                clearCtx(ctx);
+                ctx.drawImage(graphics[letter.id].img, letter.y2, letter.x2);
+            };
+            img2.src = elm.toDataURL();
+        };
+        img.src = elm.toDataURL();
+        console.log('x2/y2', letter.x2, letter.y2)
+        graphics[letter.id].ctx = ctx;
+        graphics[letter.id].boundingBox = bb; 
+    }
+
+    function fixLetterGraphics(letter) {
+        // redraws the context for the letter to the matching x2/y2s
+        var g = graphics[letter.id];
+        if (g.x2 != letter.x2 || g.y2 != letter.y2) {
+            clearCtx(g.ctx);
+            g.ctx.drawImage(g.img, letter.y2, letter.x2);
+        }
+    }
+
+    function clearCtx(ctx) {
+        ctx.clearRect(-300, 0, width*2, height*2);
+    }
+
+    function render() {
+        clearCtx(ctx);
+        clearCtx(grabCtx);
+        textData.forEach(function(letter, i) {
+            if (!letter.grabbed) {
+                ctx.drawImage(graphics[letter.id].img, letter.y2, letter.x2);
+            } else {
+                grabCtx.drawImage(graphics[letter.id].img, letter.y2, letter.x2);
+            }
+        });
+    }
+
+    // returns the hovered letter from textData
     function detect(x, y) {
-        var match = -1;
-        text.forEach(function(letter, idx) {
+        var match = null;
+        textData.forEach(function(letter, idx) {
             var hit = 0;
-            var pix = letter.ctx.getImageData(x, y, 2, 2).data;
+            var pix = graphics[letter.id].ctx.getImageData(x, y, 2, 2).data;
 
             for (var i = 0; i < pix.length; i+= 4) {
                 if (pix[i] > 0 || pix[i+1] > 0 || pix[i+2] > 0 || pix[i+3] > 0) {
@@ -47,148 +177,102 @@
                 }
             }
             if (hit > 2) {
-                match = idx;
+                match = letter;
             }
         })
         return match;
     }
 
-    function clearCtx(ctx) {
-        ctx.clearRect(-300, 0, width*2, height*2);
-    }
-
-    function render(exclude) {
-        clearCtx(ctx);
-        text.forEach(function(elm, i) {
-            if (exclude === i) return;
-            ctx.drawImage(elm.img, elm.y2, elm.x2);
-        });
-
-    }
 
     function hoverHandler(e) {
-        if (dragging) return;
+        if (dragging || dragAssumption) return;
         var x = width/canvas.clientWidth*Math.max(0, Math.min(e.x - canvas.offsetLeft - 1, width));
         var y = height/canvas.clientHeight*Math.max(0, Math.min(e.y - canvas.offsetTop - 1, height));
-        var idx = detect(x, y);
-        hoverIdx = idx;
+        focusItem = detect(x, y);
         clearCtx(hoverCtx);
-        if (idx > -1) {
-            hoverCtx.drawImage(text[idx].imgBg, text[idx].y2, text[idx].x2);
+        if (focusItem !== null) {
+            hoverCtx.drawImage(graphics[focusItem.id].imgBg, focusItem.y2, focusItem.x2);
         }
-    }    
-
-    function dragstartHandler(e) {
-        if (hoverIdx < 0) return;
-        hoverData = text.splice(hoverIdx, 1)[0];
-        dragging = true;
-        dragX = e.x;
-        dragY = e.y;
-        render();
-        clearCtx(dragCtx);
-        clearCtx(hoverCtx);
-        dragCtx.drawImage(hoverData.imgBg, hoverData.y2, hoverData.x2);
     }
 
-    function dragendHandler(e) {
-        dragging = false;
-        dragger.style.right = 0;
-        dragger.style.bottom = 0;
-        hoverData.y2 += width/canvas.clientWidth*(e.x - dragX);
-        hoverData.x2 += height/canvas.clientHeight*(e.y - dragY);
-        clearCtx(dragCtx);
-        clearCtx(hoverCtx);
-        clearCtx(hoverData.ctx);
-        hoverData.ctx.drawImage(hoverData.img, hoverData.y2, hoverData.x2); 
-        text.push(hoverData); // moves letter to top of stack
-        hoverData = null;
-        render();
-        hoverHandler(e); // might redraw hover shadow
+    function dragstartHandler(e) {
+        if (focusItem === null) return;
+        dragX = e.x;
+        dragY = e.y;
+        var data = {
+            letterId: focusItem.id, 
+            clientId: clientId,            
+        };
+        dragAssumption = true;
+        wsClient.publish('/cmd/grab', data);
     }
 
     function dragHandler(e) {
-        if (!dragging) return;
-        var x = e.x - dragX;
-        var y = e.y - dragY;
-
-        console.log('x/y',x,y);
-        dragger.style.bottom = -1*y+'px';
-        dragger.style.right = -1*x+'px';
-        chatSocket.send(JSON.stringify({cmd: 'move', letter: hoverIdx, bottom: -1*y+'px', right: -1*x+'px'}))
-    }    
-
-    function moveHandler(data) {
-
+        if (!dragging && !dragAssumption) return;
+        // the other layer renders via normal offsetting
+        var y2 = focusItem.y2 + width/canvas.clientWidth * (e.x - dragX);
+        var x2 = focusItem.x2 + height/canvas.clientHeight * (e.y - dragY);
+        var data = {
+            clientId: clientId,
+            x2: x2,
+            y2: y2
+        };
+        // these might be unwarrented if we didn't grab the letter, 
+        // in which case the server just ignores them
+        wsClient.publish('/cmd/drag', data);
     }
 
-    function chatHandler(e) {
-        var data = JSON.parse(e.data);
-        console.timeEnd('json-parsed');
-        if (data.cmd === 'load') {
-            init(data);
-        } else if (data.cmd === 'move') {
-            console.log('moveHandler', data);
-        }
+    function dragendHandler(e) {
+        if (!dragging && !dragAssumption) return;
+        var data = { 
+            letterId: focusItem.id, 
+            clientId: clientId,
+            y2: focusItem.y2 + width/canvas.clientWidth * (e.x - dragX),
+            x2: focusItem.x2 + height/canvas.clientHeight * (e.y - dragY)
+        };
+        wsClient.publish('/cmd/drop', data);
+        dragging = false;
+        dragAssumption = false;
     }
 
-    function init(data) {
-        clientId = data.clientId;
-        text = data.text;
-        console.log('clientId', clientId);
-        var container = document.querySelector('.logo-boxx');
-        text.forEach(function(letter, i) {
-            // create individual letters
-            var elm = document.createElement('canvas');
-            elm.width = width;
-            elm.height = height;
-            var ctx = elm.getContext('2d');
-            ctx.font = '170px Lobster';
-            ctx.rotate(-0.2);
-            ctx.textAlign = 'center';
-            ctx.fillStyle = 'gold';
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 17;
-            ctx.strokeText(letter.c, letter.y, letter.x);
-            ctx.fillText(letter.c, letter.y, letter.x);
-            var img = new Image();
-            img.onload = function() { 
-                letter.img = this;
-                // create bg
-                clearCtx(ctx);
-                ctx.strokeStyle = 'orangered';
-                ctx.lineWidth = 22;
-                ctx.strokeText(letter.c, letter.y, letter.x);
-                ctx.strokeStyle = 'white';
-                ctx.lineWidth = 17;
-                ctx.strokeText(letter.c, letter.y, letter.x);
-                ctx.fillText(letter.c, letter.y, letter.x);
-                var img2 = new Image();
-                img2.onload = function() { 
-                    ctx.rotate(0.2);
-                    letter.imgBg = this; 
-                };
-                img2.src = elm.toDataURL();
-            };
-            img.src = elm.toDataURL();
-            letter.ctx = ctx;
-        });
-        // allow some time to render all letters
-        setTimeout(function() {
-            render()
-            document.documentElement.addEventListener('mousemove', hoverHandler);
-            document.documentElement.addEventListener('mousemove', dragHandler);
-            document.documentElement.addEventListener('mouseup', dragendHandler);
-            dragger.addEventListener('mousedown', dragstartHandler);
-            console.timeEnd('main');
-        }, 100);
-    }
-
+    // todo ensure font is loaded in connect subscriber
     var fontLoaded = false;
     document.documentElement.addEventListener('font-loaded', function() {
         fontLoaded = true;
         console.timeEnd('font-loaded');
     });
 
-    var chatSocket = new WebSocket('ws://localhost:8080/chat');
-    chatSocket.onmessage = chatHandler;
+    var connectSub = wsClient.subscribe('/data/connect', function(msg) {
+        if (msg.clientId === clientId) {
+            textData = msg.textData;
+            textData.forEach(generateLetter);
+            connectSub.cancel(); // only do this once
+            // timeout fiddling since canvas rendering is async
+            setTimeout(function() {
+                render();
+                setTimeout(function() {
+                    document.documentElement.addEventListener('mousemove', hoverHandler);
+                    document.documentElement.addEventListener('mousemove', dragHandler);
+                    document.documentElement.addEventListener('mousedown', dragstartHandler);
+                    document.documentElement.addEventListener('mouseup', dragendHandler);
+                });
+            }, 100);
+        }
+    });
+
+    wsClient.publish('/cmd/connect', { clientId: clientId });
+
+    wsClient.subscribe('/data/update', function(msg) {
+        // sets the updated item
+        textData[msg.index] = msg.item;
+        if (msg.cmd === 'grab') {
+            // if the item was grabbed, shift it to end
+            textData.shiftIndex(msg.index);
+        } else if (msg.cmd === 'drop') { 
+            // when dropped we want to recompute the hit detection context
+            textData.forEach(fixLetterGraphics);
+        }
+        render();
+    });
+
 })();

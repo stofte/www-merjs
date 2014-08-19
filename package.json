@@ -1,12 +1,13 @@
 {
-    "name": "www-merjs",
-    "main": "app.js",
-    "engines": {
-        "node": ">=0.10.0"
-    },    
-    "version": "0.0.1",
-    "private": true,
-    "dependencies": {
-        "ws": "~0.4.31"
-    }
+  "name": "www-merjs",
+  "main": "app.js",
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "faye": "1.0.3",
+    "ws": "~0.4.31"
+  }
 }
