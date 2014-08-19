@@ -1,13 +1,7 @@
-// https://gist.github.com/rpflorence/701407
-Array.prototype.shiftIndex = function(i) {
-  this.push(this.splice(i, 1)[0]);
-};
 
-var http = require("http"),
-    url = require("url"),
-    path = require("path"),
-    fs = require("fs"),
+var http = require('http'),
     faye = require('faye'),
+    simpleHttp = require('./simple-http'),
     port = process.env.PORT || 80,
     prefix = '/www';
 
@@ -35,57 +29,10 @@ var textData = [
   {x: 460, y: 1396, c: '!', x2: 0, y2: 0, id: id++ }
 ];
  
-var httpServer = http.createServer(function(request, response) {
- 
-  var uri = url.parse(request.url).pathname
-    , filename = path.join(process.cwd() + prefix, uri);
+Array.prototype.shiftIndex = function(i) {
+  this.push(this.splice(i, 1)[0]);
+};
 
-  if (uri === '/data.js') {
-    response.writeHead(200, {"Content-Type": "text/javascript"});
-    response.write('var data = ' + JSON.stringify(textData) + ';');
-    response.end();    
-    return;
-  }
-
-  fs.exists(filename, function(exists) {
-    if(!exists) {
-      response.writeHead(404, {"Content-Type": "text/plain"});
-      response.write("404 Not Found\n");
-      response.end();
-      return;
-    }
- 
-    if (fs.statSync(filename).isDirectory()) filename += '/index.html';
- 
-    fs.readFile(filename, "binary", function(err, file) {
-      if(err) {
-        response.writeHead(500, {"Content-Type": "text/plain"});
-        response.write(err + "\n");
-        response.end();
-        return;
-      }
- 
-      response.writeHead(200);
-      response.write(file, "binary");
-      response.end();
-    });
-  });
-});
-httpServer.listen(parseInt(port, 10));
-
-var wsHttpServer = http.createServer();
-var fayeServer = new faye.NodeAdapter({mount: '/ws'});
-fayeServer.attach(wsHttpServer);
-wsHttpServer.listen(8080);
-
-var wsClient = new faye.Client('http://localhost:8080/ws');
-
-wsClient.subscribe('/cmd/connect', function(msg) {
-  // console.log('type', typeof msg);
-  var data = {clientId: msg.clientId, textData: textData };
-  // console.log('/cmd/connect', data)
-  fayeServer.getClient().publish('/data/connect', data);
-});
 
 function pushUpdate(cmd, index) {
   var data = { item: textData[index], index: index, cmd: cmd };
@@ -94,6 +41,20 @@ function pushUpdate(cmd, index) {
   }
   fayeServer.getClient().publish('/data/update', data);    
 }
+
+simpleHttp.start(); // launches the port 80 server
+// faye module piggybacks on the normal httpServer
+var wsHttpServer = http.createServer();
+var fayeServer = new faye.NodeAdapter({mount: '/ws'});
+fayeServer.attach(wsHttpServer);
+wsHttpServer.listen(8080);
+
+var wsClient = new faye.Client('http://localhost:8080/ws');
+
+wsClient.subscribe('/cmd/connect', function(msg) {
+  var data = {clientId: msg.clientId, textData: textData };
+  fayeServer.getClient().publish('/data/connect', data);
+});
 
 wsClient.subscribe('/cmd/grab', function(msg) {
   var index = -1;

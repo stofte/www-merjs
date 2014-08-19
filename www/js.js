@@ -85,7 +85,6 @@
         ctx.strokeText(letter.c, letter.y, letter.x);
         ctx.fillText(letter.c, letter.y, letter.x);
         var bb = boundingBox(ctx.getImageData(0, 0, width, height).data);
-        console.log(bb)
         var img = new Image();
         img.onload = function() { 
             graphics[letter.id].img = this;
@@ -94,19 +93,7 @@
             ctx.strokeStyle = 'orangered';
             ctx.lineWidth = 40;
             ctx.strokeText(letter.c, letter.y, letter.x);
-
-            // var pixs = ctx.getImageData(0, 0, width, height);
-            // var gen_bb = function(w) {
-            //     var bb = [];
-            //     for (var i = 0; i < w*w; i++) {
-            //         bb.push(1/(w*w))
-            //     }
-            //     return bb;
-            // };
-            // var bb = gen_bb(6);
-            // var blurBox = [ 1/9, 1/9, 1/9,
-            //                 1/9, 1/9, 1/9,
-            //                 1/9, 1/9, 1/9 ];
+            // only blur the biggest stroke effect
             stackBlurCanvasRGBA(elm, 0, 0, width, height, 15);
             ctx.strokeStyle = 'red';
             ctx.lineWidth = 23;
@@ -115,10 +102,6 @@
             ctx.lineWidth = 17;
             ctx.strokeText(letter.c, letter.y, letter.x);
             ctx.fillText(letter.c, letter.y, letter.x);
-
-            // var blurred = Filters.convolute(Filters.convolute(pixs, bb), bb);
-            // console.log(blurred, ctx.drawImage(pixs, 0, 0));
-            // ctx.putImageData(blurred, 0, 0, 0, 0, width, height);
             var img2 = new Image();
             img2.onload = function() { 
                 // resets rotation as from this point we will just be using
@@ -145,6 +128,8 @@
         if (g.x2 != letter.x2 || g.y2 != letter.y2) {
             clearCtx(g.ctx);
             g.ctx.drawImage(g.img, letter.y2, letter.x2);
+            g.x2 = letter.x2;
+            g.y2 = letter.y2;
         }
     }
 
