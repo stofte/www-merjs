@@ -20,8 +20,7 @@ html, body {
     height: 100%;
 }
 
-#logo, #logo-bg, #grabbed, #hover, #board, #others {
-    border: 1px solid red;
+#logo, #grabbed, #hover {
     position: absolute;
     bottom: 0;
     right: 0;
@@ -38,12 +37,8 @@ html, body {
         height: 100%;
     }
 
-    #logo, #logo-bg, #grabbed, #hover, #others {
+    #logo, #grabbed, #hover {
         width: auto;
         max-height: 100%;
     }
 }
-
-/*    background-image: radial-gradient( 
-        ellipse at 40% 60%, 
-        white 0%, #FFD632 40%, #FFD91C 45%, gold 50%);*/

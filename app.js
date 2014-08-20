@@ -3,7 +3,7 @@ var faye = require('faye');
 var simpleHttp = require('./simple-http');
 
 var prefix = '/www';
-var port = process.env.PORT || 80;
+var port = process.env.PORT || 3000;
 
 var id = 0;
 var textData = [
@@ -37,7 +37,8 @@ function pushUpdate(cmd, index) {
   fayeServer.getClient().publish('/data/update', data);    
 }
 
-simpleHttp.start(); // launches the port 80 server
+simpleHttp.start(port); // launches the port 80 server
+
 // faye module piggybacks on the normal httpServer
 var wsHttpServer = http.createServer();
 var fayeServer = new faye.NodeAdapter({mount: '/ws'});
