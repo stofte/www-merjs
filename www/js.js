@@ -5,10 +5,10 @@
 
     var height = 500;
     var width = 1500;
+    var logoBox = document.querySelector('.logo-box');
     var canvas = document.getElementById('logo');
     var hover = document.getElementById('hover');
     var grabbed = document.getElementById('grabbed');
-    // var others = document.getElementById('others');
 
     var ctx = canvas.getContext('2d');
     var hoverCtx =  hover.getContext('2d');
@@ -115,7 +115,6 @@
             img2.src = elm.toDataURL();
         };
         img.src = elm.toDataURL();
-        console.log('x2/y2', letter.x2, letter.y2)
         graphics[letter.id].ctx = ctx;
         graphics[letter.id].boundingBox = bb; 
     }
@@ -166,11 +165,10 @@
         return match;
     }
 
-
     function hoverHandler(e) {
         if (dragging || dragAssumption) return;
-        var x = width/canvas.clientWidth*Math.max(0, Math.min(e.x - canvas.offsetLeft - 1, width));
-        var y = height/canvas.clientHeight*Math.max(0, Math.min(e.y - canvas.offsetTop - 1, height));
+        var x = width/canvas.clientWidth*Math.max(0, Math.min(e.x - canvas.offsetLeft, width));
+        var y = height/canvas.clientHeight*Math.max(0, Math.min(e.y - logoBox.offsetTop - canvas.offsetTop, height));
         focusItem = detect(x, y);
         clearCtx(hoverCtx);
         if (focusItem !== null) {
@@ -200,6 +198,8 @@
             x2: x2,
             y2: y2
         };
+
+        // hoverCtx.drawImage(graphics[focusItem.id].imgBg, y2, x2);
         // these might be unwarrented if we didn't grab the letter, 
         // in which case the server just ignores them
         wsClient.publish('/cmd/drag', data);
