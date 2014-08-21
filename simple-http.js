@@ -1,9 +1,9 @@
 // mostly https://gist.github.com/rpflorence/701407
-var http = require('http'),
-    url = require('url'),
-    path = require('path'),
-    fs = require('fs'),
-    prefix = '/www';
+var http = require('http');
+var url = require('url');
+var path = require('path');
+var fs = require('fs');
+var prefix = '/www';
 
 var httpServer = http.createServer(function(request, response) {
  
