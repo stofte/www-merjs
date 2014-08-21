@@ -45,7 +45,7 @@ var fayeServer = new faye.NodeAdapter({mount: '/ws'});
 fayeServer.attach(wsHttpServer);
 wsHttpServer.listen(8080);
 
-var wsClient = new faye.Client('http://localhost:8080/ws');
+var wsClient = new faye.Client('http://127.0.0.1:8080/ws');
 
 wsClient.subscribe('/cmd/connect', function(msg) {
   var data = {clientId: msg.clientId, textData: textData };
