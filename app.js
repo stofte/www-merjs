@@ -3,7 +3,7 @@ var faye = require('faye');
 var simpleHttp = require('./simple-http');
 
 var prefix = '/www';
-var port = 81; //process.env.PORT || 3000;
+var port = 3000; //process.env.PORT || 3000;
 
 var id = 0;
 var textData = [
@@ -45,7 +45,7 @@ var fayeServer = new faye.NodeAdapter({mount: '/ws'});
 fayeServer.attach(wsHttpServer);
 wsHttpServer.listen(8888);
 
-var wsClient = new faye.Client('http://127.0.0.1:8080/ws');
+var wsClient = new faye.Client('http://127.0.0.1:8888/ws');
 
 wsClient.subscribe('/cmd/connect', function(msg) {
   var data = {clientId: msg.clientId, textData: textData };

@@ -36,5 +36,5 @@ var httpServer = http.createServer(function(request, response) {
 });
 
 exports.start = function(port) {
-  httpServer.listen(8080);
+  httpServer.listen(port);
 };
