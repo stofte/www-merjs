@@ -3,6 +3,8 @@
 
     console.time('font-loaded');
 
+    return;
+
     var height = 500;
     var width = 1500;
     var logoBox = document.querySelector('.logo-box');
