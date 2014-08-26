@@ -29,7 +29,7 @@
     var dragY = -1;
     
     // faye ws client
-    var wsClient = new Faye.Client('http://localhost:8080/ws');
+    var wsClient = new Faye.Client('http://localhost/ws');
     var clientId = guid(); // todo need a better way to generate id
 
 
