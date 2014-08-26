@@ -35,6 +35,7 @@ var httpServer = http.createServer(function(request, response) {
   });
 });
 
+exports.httpServer = httpServer;
 exports.start = function(port) {
   httpServer.listen(port);
 };
