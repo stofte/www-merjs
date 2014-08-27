@@ -27,6 +27,7 @@ var textData = [
 ];
 
 wss.on('connection', function(websocket) {
+  console.log('websocket request on:', websocket.upgradeReq.url);
   if (websocket.upgradeReq.url === '/save' || 
       websocket.upgradeReq.url === '/ws/save') {
     websocket.on('message', function(message) {
