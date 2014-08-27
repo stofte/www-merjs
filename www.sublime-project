@@ -2,7 +2,7 @@
     "folders":
     [
         {
-            "file_include_patterns": ["*.js", "*.json", "*.html", "*.sublime-project", "*.css"],
+            "file_include_patterns": ["*.js", "*.json", "*.html", "*.sublime-project", "*.css", "*.md"],
             "folder_exclude_patterns": ["node_modules", ".elasticbeanstalk"],
             "path": "."
         }

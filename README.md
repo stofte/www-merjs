@@ -1,3 +1,6 @@
+todo:
+- port mapping is strange. /opt/elasticbeanstalk/deploy/configuration/containerconfiguration contains port numbers, but dont know significance. 
+
 AWSCLI tools:
 - Install AWS tools http://docs.aws.amazon.com/cli/latest/userguide/installing.html
 - Configure AWS http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
