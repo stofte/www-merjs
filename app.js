@@ -1,9 +1,6 @@
 var http = require('http');
-var faye = require('faye');
-var simpleHttp = require('./simple-http');
-
-var prefix = '/www';
-var port = 3000;
+var WebSocketServer = require('ws').Server;
+var wss = new WebSocketServer({port: 3000});
 
 var id = 0;
 var textData = [
@@ -28,7 +25,16 @@ var textData = [
   {x: 460, y: 1352, c: 't', x2: 0, y2: 0, id: id++ },
   {x: 460, y: 1396, c: '!', x2: 0, y2: 0, id: id++ }
 ];
- 
+
+wss.on('connection', function(websocket) {
+  if (websocket.upgradeReq.url === '/save' || 
+      websocket.upgradeReq.url === '/ws/save') {
+    websocket.on('message', function(message) {
+      websocket.send('echo ' + message);
+    });
+  }
+});
+
 // function pushUpdate(cmd, index) {
 //   var data = { item: textData[index], index: index, cmd: cmd };
 //   if (cmd === 'grab') { 

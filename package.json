@@ -7,7 +7,6 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "faye": "1.0.3",
     "ws": "~0.4.31"
   }
 }
