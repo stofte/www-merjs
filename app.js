@@ -3,7 +3,8 @@ var faye = require('faye');
 var simpleHttp = require('./simple-http');
 
 var prefix = '/www';
-var port = 8081; //process.env.PORT || 3000;
+console.log('process.env.PORT', process.env.PORT)
+var port = 8081;
 
 var id = 0;
 var textData = [
