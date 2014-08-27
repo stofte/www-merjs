@@ -10,7 +10,9 @@
 <body>
     you must be pretty fucking hardcore
     <script>
-      var ws = new WebSocket('ws://'+ location.host +'/ws/save');
+      var url = 'ws://'+ location.host +'/ws/save';
+      document.write(url);
+      var ws = new WebSocket(url);
       ws.onmessage = function(e) {
         alert('onmessage ' + e.data);
       };
