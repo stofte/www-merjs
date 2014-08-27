@@ -4,7 +4,7 @@ var simpleHttp = require('./simple-http');
 
 var prefix = '/www';
 console.log('process.env.PORT', process.env.PORT)
-var port = 8081;
+var port = process.env.PORT;
 
 var id = 0;
 var textData = [
