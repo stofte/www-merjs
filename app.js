@@ -1,6 +1,6 @@
 var http = require('http');
 var WebSocketServer = require('ws').Server;
-var wss = new WebSocketServer({port: 3000});
+var wss = new WebSocketServer({port: 8081});
 
 var id = 0;
 var textData = [
