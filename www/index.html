@@ -10,7 +10,6 @@
 <body>
     you must be pretty fucking hardcore
     <script>
-      var domain = 
       var ws = new WebSocket('ws://'+ location.host +'/ws/save');
       ws.onmessage = function(e) {
         alert('onmessage ' + e.data);
