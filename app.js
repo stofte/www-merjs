@@ -50,7 +50,7 @@ wss.on('connection', function(websocket) {
 // var fayeServer = new faye.NodeAdapter({mount: '/ws'});
 // fayeServer.attach(simpleHttp.httpServer);
 // wsHttpServer.listen(80);
-simpleHttp.start(port); // launches the port 80 server
+// simpleHttp.start(port); // launches the port 80 server
 
 // var wsClient = new faye.Client('http://127.0.0.1:80/ws');
 
