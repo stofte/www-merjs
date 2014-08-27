@@ -1,14 +1,14 @@
 var http = require('http');
 var simpleHttp = require('./simple-http');
 var WebSocketServer = require('ws').Server;
-// var textData = require('./data').data;
+var textData = require('./data').data;
 
 // seems hardwired in eb container, messing with nginx doesnt help either
 var port = 8081;
 // when running locally, we start a basic http server in place of nginx.
-// if (!process.env.AWS_EC2) {
-//     simpleHttp.start(port);
-// }
+if (!process.env.AWS_EC2) {
+    simpleHttp.start(port);
+}
 // simple-http doesn't handle websockets, so we switch port, also in client.
 var wsport = process.env.AWS_ECS ? port : port + 1;
 var wss = new WebSocketServer({port: 8081});
