@@ -3,7 +3,6 @@ var faye = require('faye');
 var simpleHttp = require('./simple-http');
 
 var prefix = '/www';
-console.log('process.env.PORT', process.env.PORT)
 var port = process.env.PORT;
 
 var id = 0;
