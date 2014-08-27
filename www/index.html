@@ -16,7 +16,10 @@
       ws.onmessage = function(e) {
         alert('onmessage ' + e.data);
       };
-      ws.send('hello world');
+      // wait a bit before starting
+      setTimeout(function() {
+        ws.send('hello world');
+      }, 2000);
     </script>
 </body>
 </html>

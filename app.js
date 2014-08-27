@@ -25,7 +25,7 @@ var textData = [
   {x: 460, y: 1352, c: 't', x2: 0, y2: 0, id: id++ },
   {x: 460, y: 1396, c: '!', x2: 0, y2: 0, id: id++ }
 ];
-
+console.log('OMFG!')
 wss.on('connection', function(websocket) {
   console.log('websocket request on:', websocket.upgradeReq.url);
   if (websocket.upgradeReq.url === '/save' || 
