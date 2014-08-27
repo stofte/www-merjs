@@ -11,7 +11,7 @@ if (!process.env.AWS_EC2) {
 }
 // simple-http doesn't handle websockets, so we switch port, also in client.
 var wsport = process.env.AWS_ECS ? port : port + 1;
-var wss = new WebSocketServer({port: 8081});
+var wss = new WebSocketServer({port: wsport});
 
 wss.on('connection', function(websocket) {
   console.log('websocket request on:', websocket.upgradeReq.url);
