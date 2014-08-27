@@ -3,7 +3,7 @@ var faye = require('faye');
 var simpleHttp = require('./simple-http');
 
 var prefix = '/www';
-var port = process.env.PORT;
+var port = 3000;
 
 var id = 0;
 var textData = [
