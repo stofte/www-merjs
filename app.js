@@ -10,7 +10,7 @@ if (!process.env.AWS_EC2) {
     simpleHttp.start(port);
 }
 // simple-http doesn't handle websockets, so we switch port, also in client.
-var wsport = process.env.AWS_ECS ? port : port;
+var wsport = process.env.AWS_EC2 ? port : port + 1;
 var wss = new WebSocketServer({port: wsport});
 
 wss.on('connection', function(websocket) {
@@ -18,7 +18,7 @@ wss.on('connection', function(websocket) {
   if (websocket.upgradeReq.url === '/save' || 
       websocket.upgradeReq.url === '/ws/save') {
     websocket.on('message', function(message) {
-      websocket.send('echo ' + (process.env.AWS_ECS ? port : port + 1));
+      websocket.send('echo' + message);
     });
   }
 });
