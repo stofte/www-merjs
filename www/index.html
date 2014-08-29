@@ -10,7 +10,11 @@
 <body>
     you must be pretty fucking hardcore
     <script>
-      var url = 'ws://'+ location.host +'/ws/save';
+      var host = location.hostname;
+      if (host === 'localhost') {
+        host += ':8082';
+      }
+      var url = 'ws://'+ host +'/ws/save';
       document.write(url);
       var ws = new WebSocket(url);
       ws.onmessage = function(e) {

@@ -1,8 +1,9 @@
 {
+    "name": "www-merjs.dk",
     "folders":
     [
         {
-            "file_include_patterns": ["*.js", "*.json", "*.html", "*.sublime-project", "*.css", "*.md"],
+            "file_include_patterns": ["*.js", "*.json", "*.html", "*.sublime-project", "*.css", "*.md", "*.config"],
             "folder_exclude_patterns": ["node_modules", ".elasticbeanstalk"],
             "path": "."
         }
