@@ -1,6 +1,15 @@
 module.exports = function(grunt) {
 	'use strict';
 
+	var jsfiles = [
+		'src/StackBlur.js',
+		'src/font-detect.js',
+		'src/guid.js',
+		'src/client.js',
+		'src/js.js'
+	];
+	var cssfiles = [ 'src/font.css', 'src/css.css' ];
+
 	var conf = {
 		connect: {
 			server: {
@@ -20,36 +29,24 @@ module.exports = function(grunt) {
 			},
 			'prod-test': {
 				files: {
-					'src/js.min.js': [
-						'src/StackBlur.js',
-						'src/font-detect.js',
-						'src/guid.js',
-						'src/client.js',
-						'src/js.js'
-					]
+					'src/js.min.js': jsfiles
 				}
 			},
 			'prod': {
 				files: {
-					'www/js.min.js': [
-						'src/StackBlur.js',
-						'src/font-detect.js',
-						'src/guid.js',
-						'src/client.js',
-						'src/js.js'
-					]
+					'www/js.min.js': jsfiles
 				}
 			}
 		},
 		cssmin: {
 			'prod-test': {
 				files: {
-					'src/css.min.css': ['src/font.css', 'src/css.css']
+					'src/css.min.css': cssfiles
 				}
 			},
 			'prod': {
 				files: {
-					'www/css.min.css': ['src/font.css', 'src/css.css']
+					'www/css.min.css': cssfiles
 				}
 			}
 		},
