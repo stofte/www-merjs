@@ -8,7 +8,7 @@ module.exports = function(grunt) {
 		'src/client.js',
 		'src/js.js'
 	];
-	var cssfiles = [ 'src/font.css', 'src/css.css' ];
+	var cssfiles = [ 'src/css.css' ];
 
 	var conf = {
 		connect: {
@@ -23,7 +23,7 @@ module.exports = function(grunt) {
 		uglify: {
 			options: {
 				compress: {
-					drop_console: true
+					drop_console: false
 				},
 				preserveComments: 'some'
 			},
