@@ -1,5 +1,6 @@
 node_modules
 www
+src\index.html
 .elasticbeanstalk
 .ebextensions
 *.zip

@@ -1,5 +1,3 @@
-var saveLicense = require('uglify-save-license');
-
 module.exports = function(grunt) {
 	'use strict';
 
@@ -28,11 +26,38 @@ module.exports = function(grunt) {
 					]
 				}
 			}
-		}		
+		},
+		cssmin: {
+			combine: {
+				files: {
+					'www/min.css': ['src/font.css', 'src/css.css']
+				}
+			}
+		},
+		jade: {
+			options: {
+				data: {
 
+				},
+				pretty: true,
+				indentchar: '\t',
+			},
+			development: {
+				options: {
+					data: {
+						env: 'development',
+					}
+				},
+				files: {
+					'src/index.html': 'src/index.jade'
+				}								
+			}
+		}
 	};
 
 	grunt.initConfig(conf);
 	grunt.loadNpmTasks('grunt-contrib-connect');
 	grunt.loadNpmTasks('grunt-contrib-uglify');
+	grunt.loadNpmTasks('grunt-contrib-cssmin');
+	grunt.loadNpmTasks('grunt-contrib-jade');
 };
