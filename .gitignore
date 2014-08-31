@@ -3,6 +3,5 @@ src/index.html
 src/*.min.css
 src/*.min.js
 .elasticbeanstalk
-.ebextensions
 *.zip
 *.sublime-workspace
