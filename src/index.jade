@@ -1,15 +1,28 @@
 doctype html
 html
-  head
-    title Mer' JS
-    meta(http-equiv="X-UA-Compatible", content="IE=edge")
+    head
+        title Mer' JS
+        meta(http-equiv="X-UA-Compatible", content="IE=edge")
+        if env === 'dev'
+            script(type="text/javascript").
+                console.time('startup');
+                console.time('font-loaded');
+            link(href="font.css", rel="stylesheet", type="text/css")
+            link(href="css.css", rel="stylesheet", type="text/css")
+        else if env === 'prod-test'
+            link(href="css.min.css", rel="stylesheet", type="text/css")
+    body
+        noscript you must be pretty fucking hardcore
+        figure.logo-box
+            div.logo-boxx
+                canvas#logo(width="1500", height="500")
+                canvas#hover(width="1500", height="500")
+                canvas#grabbed(width="1500", height="500")
     if env === 'dev'
-        script(type="text/javascript").
-            console.time('startup');
-            console.time('font-loaded');
-        link(href="font.css", rel="stylesheet", type="text/css")
-        link(href="css.css", rel="stylesheet", type="text/css")
+        script(type="text/javascript", src="font-detect.js")
+        script(type="text/javascript", src="StackBlur.js")
+        script(type="text/javascript", src="guid.js")
+        script(type="text/javascript", src="client.js")
+        script(type="text/javascript", src="js.js")
     else if env === 'prod-test'
-        link(href="css.min.css", rel="stylesheet", type="text/css")
-  body
-    p Hello world
+        script(type="text/javascript", src="js.min.js")
