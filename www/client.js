@@ -11,14 +11,17 @@
 
         var pub = function(cmd, data) {
             var json = JSON.stringify({cmd: cmd, data: data});
+            console.log('sending', cmd, data)
             ws.send(json);
         };
 
         var messageHandler = function(e) {
             var data = JSON.parse(e.data);
-            console.log('messageHandler', data)
+            console.log('messageHandler', data.cmd)
             if (subbers[data.cmd]) {
+
                 subbers[data.cmd].forEach(function(elm, idx) {
+                    console.log('calling handler', data.cmd)
                     elm(data);
                 });
             }

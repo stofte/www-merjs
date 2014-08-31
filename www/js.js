@@ -185,7 +185,7 @@
             clientId: clientId,            
         };
         dragAssumption = true;
-        wsClient.publish('/cmd/grab', data);
+        wsClient.publish('grab', data);
     }
 
     function dragHandler(e) {
@@ -202,7 +202,7 @@
         // hoverCtx.drawImage(graphics[focusItem.id].imgBg, y2, x2);
         // these might be unwarrented if we didn't grab the letter, 
         // in which case the server just ignores them
-        wsClient.publish('/cmd/drag', data);
+        wsClient.publish('drag', data);
     }
 
     function dragendHandler(e) {
@@ -213,7 +213,7 @@
             y2: focusItem.y2 + width/canvas.clientWidth * (e.x - dragX),
             x2: focusItem.x2 + height/canvas.clientHeight * (e.y - dragY)
         };
-        wsClient.publish('/cmd/drop', data);
+        wsClient.publish('drop', data);
         dragging = false;
         dragAssumption = false;
     }
@@ -223,6 +223,26 @@
     document.documentElement.addEventListener('font-loaded', function() {
         fontLoaded = true;
         console.timeEnd('font-loaded');
+    });
+
+    wsClient.subscribe('grab', function(msg) {
+        textData[msg.index] = msg.item;
+        // if the item was grabbed, shift it to end
+        textData.push(textData.splice(msg.index, 1)[0]);
+        render();
+    });
+
+    wsClient.subscribe('drop', function(msg) {
+        textData[msg.index] = msg.item;
+        // when dropped we want to recompute the hit detection context
+        textData.forEach(fixLetterGraphics);
+        render();
+    });
+
+    wsClient.subscribe('update', function(msg) {
+        // sets the updated item
+        textData[msg.index] = msg.item;
+        render();
     });
 
     wsClient.subscribe('connect', function(msg) {
@@ -242,22 +262,9 @@
         }
     });
 
-    wsClient.subscribe('update', function(msg) {
-        // sets the updated item
-        textData[msg.index] = msg.item;
-        if (msg.cmd === 'grab') {
-            // if the item was grabbed, shift it to end
-            textData.push(textData.splice(msg.index, 1)[0]);
-        } else if (msg.cmd === 'drop') { 
-            // when dropped we want to recompute the hit detection context
-            textData.forEach(fixLetterGraphics);
-        }
-        render();
-    });
-
     // timeout for socket to connect
     setTimeout(function() {
-        console.log('calling connect:' + clientId);
         wsClient.publish('connect', { clientId: clientId });
     }, 1000);
+
 })();

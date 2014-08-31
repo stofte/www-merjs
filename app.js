@@ -13,19 +13,59 @@ if (!process.env.AWS_EC2) {
 }
 // simple-http doesn't handle websockets, so we switch port, also in client.
 var wss = new WebSocketServer({port: port});
+var sockets = [];
+
+function pushUpdate(cmd, index) {
+    var data = { item: positions[index], index: index, cmd: cmd };
+    var json = JSON.stringify(data);
+    sockets.forEach(function(socket) {
+        try {
+            socket.send(json);
+        } catch (e) {
+            console.log('error on socket.send', e);
+        }
+    });
+}
 
 wss.on('connection', function(websocket) {
-  console.log('websocket request on:', websocket.upgradeReq.url);
   if (websocket.upgradeReq.url === '/ws/') {
-    websocket.on('message', function(json) {
-        console.log('message', json)
+    sockets.push(websocket);
+    websocket.on('message', function(json) {        
         var data = JSON.parse(json);
         var msg = data.data;
-        var response = null;
+        var index = -1; // if we manipulate data, all clients gets notified 
+        var response = null; // single client response
+
         if (data.cmd === 'connect') {
+            console.log('connection', msg.clientId);
             response = { clientId: msg.clientId, positions: positions };
+        } else if (data.cmd === 'grab') {
+            positions.forEach(function(letter, idx) {
+                if (letter.id === msg.letterId && !letter.grabbed) {
+                    console.log('grabbed by', msg.clientId);
+                    letter.grabbed = true;
+                    letter.grabbedBy = msg.clientId;
+                    index = idx;
+                }
+            });
+            // client must do the same thing
+            positions.push(positions.splice(index, 1)[0]); 
+        } else if (data.cmd === 'drag') {
+            data.cmd = 'update'; // drag is an update, since all clients renders
+            positions.forEach(function(letter, idx) {
+                if (letter.grabbed && letter.grabbedBy === msg.clientId) {
+                    console.log('drag by', msg.clientId, msg.x2, msg.y2);
+                    letter.x2 = msg.x2;
+                    letter.y2 = msg.y2;
+                    index = idx;
+                }
+            });            
         }
-        if (response != null) {
+
+        // we response either way
+        if (index > -1) {
+            pushUpdate(data.cmd, index);
+        } else if (response != null) {
             response.cmd = data.cmd;
             var json = JSON.stringify(response);
             websocket.send(json);
@@ -34,13 +74,6 @@ wss.on('connection', function(websocket) {
   }
 });
 
-// function pushUpdate(cmd, index) {
-//   var data = { item: textData[index], index: index, cmd: cmd };
-//   if (cmd === 'grab') { 
-//     textData.push(textData.splice(index, 1)[0]); // client must do the same thing
-//   }
-//   fayeServer.getClient().publish('/data/update', data);    
-// }
 
 
 
