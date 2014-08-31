@@ -13,11 +13,25 @@ module.exports = function(grunt) {
 		},
 		uglify: {
 			options: {
+				compress: {
+					drop_console: true
+				},
 				preserveComments: 'some'
 			},
 			'prod-test': {
 				files: {
 					'src/js.min.js': [
+						'src/StackBlur.js',
+						'src/font-detect.js',
+						'src/guid.js',
+						'src/client.js',
+						'src/js.js'
+					]
+				}
+			},
+			'prod': {
+				files: {
+					'www/js.min.js': [
 						'src/StackBlur.js',
 						'src/font-detect.js',
 						'src/guid.js',
@@ -31,6 +45,11 @@ module.exports = function(grunt) {
 			'prod-test': {
 				files: {
 					'src/css.min.css': ['src/font.css', 'src/css.css']
+				}
+			},
+			'prod': {
+				files: {
+					'www/css.min.css': ['src/font.css', 'src/css.css']
 				}
 			}
 		},
@@ -51,6 +70,14 @@ module.exports = function(grunt) {
 					}
 				},
 				files: { 'src/index.html': 'src/index.jade' }
+			},
+			'prod': {
+				options: {
+					data: {
+						env: 'prod'
+					}
+				},
+				files: { 'www/index.html': 'src/index.jade' }
 			}
 		}
 	};
@@ -66,5 +93,6 @@ module.exports = function(grunt) {
 	// prod-test == localhost with minified content
 	grunt.registerTask('prod-test', ['cssmin:prod-test', 'uglify:prod-test', 'jade:prod-test']);
 	// prod === aws
+	grunt.registerTask('prod', ['cssmin:prod', 'uglify:prod', 'jade:prod']);
 
 };

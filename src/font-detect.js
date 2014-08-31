@@ -1,3 +1,6 @@
+/*! adds delimeter comment
+    merjs.dk 
+*/
 (function() {
     'use strict';
     var elm = document.createElement('div');
