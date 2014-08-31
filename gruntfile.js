@@ -15,9 +15,9 @@ module.exports = function(grunt) {
 			options: {
 				preserveComments: 'some'
 			},
-			production: {
+			'prod-test': {
 				files: {
-					'www/min.js': [
+					'src/js.min.js': [
 						'src/StackBlur.js',
 						'src/font-detect.js',
 						'src/guid.js',
@@ -28,29 +28,29 @@ module.exports = function(grunt) {
 			}
 		},
 		cssmin: {
-			combine: {
+			'prod-test': {
 				files: {
-					'www/min.css': ['src/font.css', 'src/css.css']
+					'src/css.min.css': ['src/font.css', 'src/css.css']
 				}
 			}
 		},
 		jade: {
-			options: {
-				data: {
-
-				},
-				pretty: true,
-				indentchar: '\t',
-			},
-			development: {
+			dev: {
 				options: {
+					pretty: true,
 					data: {
-						env: 'development',
+						env: 'dev'
 					}
 				},
-				files: {
-					'src/index.html': 'src/index.jade'
-				}								
+				files: { 'src/index.html': 'src/index.jade' }
+			},
+			'prod-test': {
+				options: {
+					data: {
+						env: 'prod-test'
+					}
+				},
+				files: { 'src/index.html': 'src/index.jade' }
 			}
 		}
 	};
@@ -60,4 +60,11 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-cssmin');
 	grunt.loadNpmTasks('grunt-contrib-jade');
+
+	// dev == localhost
+	grunt.registerTask('dev', ['jade:dev']);
+	// prod-test == localhost with minified content
+	grunt.registerTask('prod-test', ['cssmin:prod-test', 'uglify:prod-test', 'jade:prod-test']);
+	// prod === aws
+
 };
