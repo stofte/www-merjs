@@ -3,7 +3,7 @@
     "folders":
     [
         {
-            "file_include_patterns": ["*.js", "*.json", "*.html", "*.sublime-project", "*.css", "*.md", "*.config", ".gitignore", "*.jade"],
+            "file_include_patterns": ["*.js", "*.json", "*.html", "*.sublime-project", "*.css", "*.md", "*.config", ".gitignore", "*.jade", "*.conf"],
             "folder_exclude_patterns": ["node_modules", ".elasticbeanstalk", "www"],
             "path": "."
         }
