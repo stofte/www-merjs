@@ -1,17 +1,10 @@
 var http = require('http');
-var simpleHttp = require('./simple-http');
 var WebSocketServer = require('ws').Server;
 var positions = require('./positions').data;
 
 // seems hardwired in eb container, messing with nginx doesnt help either
-var port = 8081;
-
-// when running locally, we start a basic http server in place of nginx.
-if (!process.env.AWS_EC2) {
-    simpleHttp.start(80);
-    port = 81;
-}
-// simple-http doesn't handle websockets, so we switch port, also in client.
+var port = process.env.AWS_EC2 ? 8081 : 81;
+console.log('port', port);
 var wss = new WebSocketServer({port: port});
 var sockets = [];
 
@@ -59,7 +52,17 @@ wss.on('connection', function(websocket) {
                     letter.y2 = msg.y2;
                     index = idx;
                 }
-            });            
+            });
+            
+        } else if (data.cmd === 'drop') {
+            positions.forEach(function(letter, idx) {
+                if (letter.id === msg.letterId && letter.grabbedBy === msg.clientId) {
+                    console.log('drop by', msg.clientId);
+                    letter.grabbed = false;
+                    letter.grabbedBy = undefined;
+                    index = idx;
+                } // else client attempted to drop something it wasnt holding
+            });
         }
 
         // we response either way

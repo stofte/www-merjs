@@ -1,9 +1,6 @@
 (function() {
     'use strict';
 
-
-    console.time('font-loaded');
-
     var height = 500;
     var width = 1500;
     var logoBox = document.querySelector('.logo-box');
@@ -28,7 +25,8 @@
     var dragAssumption = false; // true if we've assumed grab of focusItem only
     var dragX = -1;
     var dragY = -1;
-    
+
+    console.time('socket');    
     var wsClient = createMsgClient();
     var clientId = guid(); // todo need a better way to generate id
 
@@ -68,6 +66,7 @@
     }
 
 
+    var maxLetterIdGenerated = -1;
     function generateLetter(letter) {
         graphics[letter.id] = {};
         var elm = document.createElement('canvas');
@@ -111,6 +110,11 @@
                 graphics[letter.id].y2 = letter.y2;
                 clearCtx(ctx);
                 ctx.drawImage(graphics[letter.id].img, letter.y2, letter.x2);
+                // drawImage is synchronous, so at this point, all processing 
+                // for the given letter is finished.
+                if (maxLetterIdGenerated < letter.id) {
+                    maxLetterIdGenerated = letter.id;
+                }
             };
             img2.src = elm.toDataURL();
         };
@@ -225,46 +229,68 @@
         console.timeEnd('font-loaded');
     });
 
+    // when someone grabs a letter it moves to the top of the render order
     wsClient.subscribe('grab', function(msg) {
         textData[msg.index] = msg.item;
-        // if the item was grabbed, shift it to end
         textData.push(textData.splice(msg.index, 1)[0]);
         render();
     });
 
+    // when the letter is dropped we recompute the hitbox grpahics
     wsClient.subscribe('drop', function(msg) {
         textData[msg.index] = msg.item;
-        // when dropped we want to recompute the hit detection context
         textData.forEach(fixLetterGraphics);
         render();
     });
 
+    // item updated (moved)
     wsClient.subscribe('update', function(msg) {
-        // sets the updated item
         textData[msg.index] = msg.item;
         render();
     });
 
+    // initial connection loads all letter positions
     wsClient.subscribe('connect', function(msg) {
+        if (!fontLoaded) console.warn('Font wasn\'t loaded yet!');
+        
         if (msg.clientId === clientId) {
+            // get the max letter id
+            var maxId = -1;
+            var start = (new Date()).getTime();
             textData = msg.positions;
+            textData.forEach(function(l) { maxId = l.id > maxId ? l.id : maxId; });
             textData.forEach(generateLetter);
-            // timeout fiddling since canvas rendering is async
-            setTimeout(function() {
-                render();
-                setTimeout(function() {
+            // polling until letters are generated (the onload stuff causes it to become async)
+            setTimeout(function letterPoller(){
+                var timed = (new Date()).getTime() - start;
+                if (maxLetterIdGenerated === maxId) {
+                    render();
                     document.documentElement.addEventListener('mousemove', hoverHandler);
                     document.documentElement.addEventListener('mousemove', dragHandler);
                     document.documentElement.addEventListener('mousedown', dragstartHandler);
                     document.documentElement.addEventListener('mouseup', dragendHandler);
-                });
-            }, 100);
+                    console.timeEnd('startup'); // total load/rendering time
+                } else if (timed < 30000) { // poll for 30 secs, since this can be compute heavy
+                    setTimeout(letterPoller, 100);
+                } else {
+                    console.error('letter generation timed out');
+                }
+            });
         }
     });
 
-    // timeout for socket to connect
-    setTimeout(function() {
-        wsClient.publish('connect', { clientId: clientId });
-    }, 1000);
+    // polls the socket, waiting for when it opens.
+    var start = (new Date()).getTime();
+    setTimeout(function socketPoller() {
+        var timed = (new Date()).getTime() - start;
+        if (wsClient.socket.readyState === 1) {
+            console.timeEnd('socket');
+            wsClient.publish('connect', { clientId: clientId });
+        } else if (timed < 10000) { // poll for x milliseconds
+            setTimeout(socketPoller, 10);
+        } else {
+            console.error('socket could not connect');
+        }
+    });
 
 })();

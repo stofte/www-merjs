@@ -39,8 +39,10 @@
 
         var obj = {
             publish: pub,
-            subscribe: sub
+            subscribe: sub,
+            socket: ws
         };
+
 
         return obj;
     };
