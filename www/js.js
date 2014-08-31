@@ -1,9 +1,8 @@
 (function() {
     'use strict';
 
-    console.time('font-loaded');
 
-    return;
+    console.time('font-loaded');
 
     var height = 500;
     var width = 1500;
@@ -30,8 +29,7 @@
     var dragX = -1;
     var dragY = -1;
     
-    // faye ws client
-    var wsClient = new Faye.Client('http://localhost/ws');
+    var wsClient = createMsgClient();
     var clientId = guid(); // todo need a better way to generate id
 
 
@@ -227,11 +225,10 @@
         console.timeEnd('font-loaded');
     });
 
-    var connectSub = wsClient.subscribe('/data/connect', function(msg) {
+    wsClient.subscribe('connect', function(msg) {
         if (msg.clientId === clientId) {
-            textData = msg.textData;
+            textData = msg.positions;
             textData.forEach(generateLetter);
-            connectSub.cancel(); // only do this once
             // timeout fiddling since canvas rendering is async
             setTimeout(function() {
                 render();
@@ -245,9 +242,7 @@
         }
     });
 
-    wsClient.publish('/cmd/connect', { clientId: clientId });
-
-    wsClient.subscribe('/data/update', function(msg) {
+    wsClient.subscribe('update', function(msg) {
         // sets the updated item
         textData[msg.index] = msg.item;
         if (msg.cmd === 'grab') {
@@ -260,4 +255,9 @@
         render();
     });
 
+    // timeout for socket to connect
+    setTimeout(function() {
+        console.log('calling connect:' + clientId);
+        wsClient.publish('connect', { clientId: clientId });
+    }, 1000);
 })();
