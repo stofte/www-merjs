@@ -22,9 +22,7 @@ module.exports = function(grunt) {
 		},
 		uglify: {
 			options: {
-				compress: {
-					drop_console: true
-				},
+				compress: false,
 				preserveComments: 'some'
 			},
 			'prod-test': {
@@ -32,6 +30,12 @@ module.exports = function(grunt) {
 					'src/js.min.js': jsfiles
 				}
 			},
+			'prod-debug': {
+				options: { compress: false },
+				files: {
+					'www/js.min.js': jsfiles
+				}
+			},			
 			'prod': {
 				files: {
 					'www/js.min.js': jsfiles
@@ -50,6 +54,19 @@ module.exports = function(grunt) {
 				}
 			}
 		},
+		// prod-debug option to run full JS on aws
+		copy: {
+			'prod-debug': {
+				files: [
+					{
+						expand: true,
+						dest: 'www',
+						cwd: 'src',
+						src: ['*.js', '*.css', '*.woff', '*.woff2']
+					}
+				]
+			}
+		},		
 		jade: {
 			dev: {
 				options: {
@@ -68,15 +85,26 @@ module.exports = function(grunt) {
 				},
 				files: { 'src/index.html': 'src/index.jade' }
 			},
+			'prod-debug': {
+				options: {
+					data: {
+						pretty: true,
+						env: 'prod'
+					}
+				},
+				files: { 'www/index.html': 'src/index.jade' }
+			}			,
 			'prod': {
 				options: {
 					data: {
+
 						env: 'prod'
 					}
 				},
 				files: { 'www/index.html': 'src/index.jade' }
 			}
-		}
+		},
+		clean: ['www']
 	};
 
 	grunt.initConfig(conf);
@@ -84,12 +112,15 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-cssmin');
 	grunt.loadNpmTasks('grunt-contrib-jade');
+	grunt.loadNpmTasks('grunt-contrib-copy');
+	grunt.loadNpmTasks('grunt-contrib-clean');
 
 	// dev == localhost
 	grunt.registerTask('dev', ['jade:dev']);
 	// prod-test == localhost with minified content
 	grunt.registerTask('prod-test', ['cssmin:prod-test', 'uglify:prod-test', 'jade:prod-test']);
+	grunt.registerTask('prod-debug', ['clean', 'copy:prod-debug', 'jade:prod-debug']);
 	// prod === aws
-	grunt.registerTask('prod', ['cssmin:prod', 'uglify:prod', 'jade:prod']);
+	grunt.registerTask('prod', ['clean','cssmin:prod', 'uglify:prod', 'jade:prod']);
 
 };

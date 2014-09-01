@@ -3,11 +3,11 @@ html
     head
         title Mer' JS
         meta(http-equiv="X-UA-Compatible", content="IE=edge")
-        if env === 'dev' || env === 'prod-test'
+        if env === 'dev' || env === 'prod-test' || env === 'prod-debug'
             script(type="text/javascript").
                 console.time('startup');
                 console.time('font-loaded');
-        if env === 'dev'
+        if env === 'dev' || env === 'prod-debug'
             link(href="font.css", rel="stylesheet", type="text/css")
             link(href="css.css", rel="stylesheet", type="text/css")
         else if env === 'prod-test' || env === 'prod'
@@ -20,7 +20,7 @@ html
                 canvas#logo(width="1500", height="500")
                 canvas#hover(width="1500", height="500")
                 canvas#grabbed(width="1500", height="500")
-    if env === 'dev'
+    if env === 'dev' || env === 'prod-debug'
         script(type="text/javascript", src="font-detect.js")
         script(type="text/javascript", src="StackBlur.js")
         script(type="text/javascript", src="guid.js")
