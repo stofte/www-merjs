@@ -87,9 +87,9 @@ module.exports = function(grunt) {
 			},
 			'prod-debug': {
 				options: {
+					pretty: true,
 					data: {
-						pretty: true,
-						env: 'prod'
+						env: 'prod-debug'
 					}
 				},
 				files: { 'www/index.html': 'src/index.jade' }
