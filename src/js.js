@@ -1,6 +1,10 @@
 (function() {
     'use strict';
 
+    function ts() {
+        return (new Date()).getTime();
+    }
+
     var height = 500;
     var width = 1500;
     var logoBox = document.querySelector('.logo-box');
@@ -28,6 +32,7 @@
 
     console.time('socket');    
     var wsClient = createMsgClient();
+    window.client = wsClient;
     var clientId = guid(); // todo need a better way to generate id
 
 
@@ -249,21 +254,31 @@
         render();
     });
 
+    wsClient.subscribe('reset', function(msg) {
+        textData = msg.data;
+        render();
+    });
+
     // initial connection loads all letter positions
-    wsClient.subscribe('connect', function(msg) {
-        var start = (new Date()).getTime();
-        setTimeout(function fontPoller() {
-            var timed = (new Date()).getTime() - start;
+    wsClient.subscribe('connect', function connectHandler(msg) {
+        console.log('connect:msg', msg);
+        var fontTimestamp = ts();
+        var fontDelta = ts() - fontTimestamp;
+        var fontPoller = function() {
+            fontDelta = ts() - fontTimestamp;
+            console.log('fontPoller:delta', fontDelta, fontLoaded, fontTimestamp);
             if (fontLoaded && msg.clientId === clientId) {
                 // get the max letter id
                 var maxId = -1;
-                var start = (new Date()).getTime();
+                var renderTimestamp = ts();
+                var renderDelta = ts() - renderTimestamp;
                 textData = msg.positions;
                 textData.forEach(function(l) { maxId = l.id > maxId ? l.id : maxId; });
                 textData.forEach(generateLetter);
                 // polling until letters are generated (the onload stuff causes it to become async)
-                setTimeout(function letterPoller(){
-                    var timed = (new Date()).getTime() - start;
+                var renderPoller = function (){
+                    renderDelta = ts() - renderTimestamp;
+                    console.log('renderPoller:delta', renderDelta, renderTimestamp);
                     if (maxLetterIdGenerated === maxId) {
                         render();
                         document.documentElement.addEventListener('mousemove', hoverHandler);
@@ -271,58 +286,36 @@
                         document.documentElement.addEventListener('mousedown', dragstartHandler);
                         document.documentElement.addEventListener('mouseup', dragendHandler);
                         console.timeEnd('startup'); // total load/rendering time
-                    } else if (timed < 30000) { // poll for 30 secs, since this can be compute heavy
-                        setTimeout(letterPoller, 100);
+                    } else if (renderDelta < 30000) { // poll for 30 secs, since this can be compute heavy
+                        setTimeout(renderPoller, 100);
                     } else {
-                        console.error('letter generation timed out');
+                        console.error('letter generation timed out', renderDelta);
                     }
-                });
-            } else if (timed < 30000) {
+                }
+                setTimeout(renderPoller);
+            } else if (fontDelta < 30000) {
                 setTimeout(fontPoller, 100);
             } else {
-                console.error('waiting for font timed out', timed);
+                console.error('waiting for font timed out', fontDelta);
             }
-        });
-
-        // if (!fontLoaded) console.warn('Font wasn\'t loaded yet!');
-        
-        // if (msg.clientId === clientId) {
-        //     // get the max letter id
-        //     var maxId = -1;
-        //     var start = (new Date()).getTime();
-        //     textData = msg.positions;
-        //     textData.forEach(function(l) { maxId = l.id > maxId ? l.id : maxId; });
-        //     textData.forEach(generateLetter);
-        //     // polling until letters are generated (the onload stuff causes it to become async)
-        //     setTimeout(function letterPoller(){
-        //         var timed = (new Date()).getTime() - start;
-        //         if (maxLetterIdGenerated === maxId) {
-        //             render();
-        //             document.documentElement.addEventListener('mousemove', hoverHandler);
-        //             document.documentElement.addEventListener('mousemove', dragHandler);
-        //             document.documentElement.addEventListener('mousedown', dragstartHandler);
-        //             document.documentElement.addEventListener('mouseup', dragendHandler);
-        //             console.timeEnd('startup'); // total load/rendering time
-        //         } else if (timed < 30000) { // poll for 30 secs, since this can be compute heavy
-        //             setTimeout(letterPoller, 100);
-        //         } else {
-        //             console.error('letter generation timed out');
-        //         }
-        //     });
-        // }
+        };
+        setTimeout(fontPoller);
     });
 
     // polls the socket, waiting for when it opens.
-    var start = (new Date()).getTime();
+    var socketTimestamp = ts();
+    var socketDelta = ts() - socketTimestamp;
+    
     setTimeout(function socketPoller() {
-        var timed = (new Date()).getTime() - start;
+        socketDelta = ts() - socketTimestamp;
+        console.log('socketPoller:delta', socketDelta, socketTimestamp);
         if (wsClient.socket.readyState === 1) {
             console.timeEnd('socket');
             wsClient.publish('connect', { clientId: clientId });
-        } else if (timed < 10000) { // poll for x milliseconds
+        } else if (socketDelta < 10000) { // poll for x milliseconds
             setTimeout(socketPoller, 10);
         } else {
-            console.error('socket could not connect');
+            console.error('socket could not connect', socketDelta);
         }
     });
 

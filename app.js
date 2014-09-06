@@ -1,15 +1,23 @@
 var http = require('http');
 var WebSocketServer = require('ws').Server;
-var positions = require('./positions').data;
+var original =require('./positions').data;
+var positions = JSON.parse(JSON.stringify(original));
 
 // seems hardwired in eb container, messing with nginx doesnt help either
 var port = process.env.AWS_EC2 ? 8081 : 81;
+var resetPassword = process.env.APP_RESET_PASSWORD;
 console.log('port', port);
 var wss = new WebSocketServer({port: port});
 var sockets = [];
 
 function pushUpdate(cmd, index) {
-    var data = { item: positions[index], index: index, cmd: cmd };
+    var data = { cmd: cmd };
+    if (index) {
+        data.item = positions[index];
+        data.index = index;
+    } else {
+        data.positions = positions;
+    }
     var json = JSON.stringify(data);
     sockets.forEach(function(socket) {
         // TODO test for socket state
@@ -27,7 +35,7 @@ wss.on('connection', function(websocket) {
     websocket.on('message', function(json) {        
         var data = JSON.parse(json);
         var msg = data.data;
-        var index = -1; // if we manipulate data, all clients gets notified 
+        var index = null; // if we manipulate data, all clients gets notified 
         var response = null; // single client response
 
         if (data.cmd === 'connect') {
@@ -64,12 +72,20 @@ wss.on('connection', function(websocket) {
                     index = idx;
                 } // else client attempted to drop something it wasnt holding
             });
+        } else if (data.cmd === 'reset' && data.password === resetPassword) {
+            positions = JSON.parse(JSON.stringify(original));
+            index === -1;
+            console.log('was reset', positions);
         }
 
-        // we response either way
-        if (index > -1) {
+        if (index === -1) {
+            console.log('ws.handler:response 1', index);
+            pushUpdate(data.cmd);
+        } else if (index !== null && index >= 0) {
+            console.log('ws.handler:response 2', index);
             pushUpdate(data.cmd, index);
         } else if (response != null) {
+            console.log('ws.handler:response 3');
             response.cmd = data.cmd;
             var json = JSON.stringify(response);
             websocket.send(json);
