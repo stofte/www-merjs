@@ -29,7 +29,6 @@ module.exports = function(grunt) {
 		},
 		uglify: {
 			options: {
-				compress: false,
 				preserveComments: 'some'
 			},
 			'prod-test': {
@@ -38,12 +37,12 @@ module.exports = function(grunt) {
 				}
 			},
 			'prod-debug': {
-				options: { compress: false },
 				files: {
 					'www/js.min.js': jsfiles
 				}
 			},			
 			'prod': {
+				options: { compress: { drop_console: true }},
 				files: {
 					'www/js.min.js': jsfiles
 				}
