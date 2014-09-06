@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+<head>
+<title>Timeline</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta http-equiv="content-type" content="text/html; charset=utf8">
+<script src="moment.js"></script>
+<script src="moment.da.js"></script>
+<script charset="utf-8" src="d3.js"></script>
+<style>
+
+@font-face { 
+    font-family: 'glyphicons'; 
+    src: url('fonts/glyphicons-regular.eot'); 
+    src: url('fonts/glyphicons-regular.eot?#iefix') format('embeddedopentype'), 
+         url('fonts/glyphicons-regular.woff') format('woff'), 
+         url('fonts/glyphicons-regular.ttf') format('truetype'), 
+         url('fonts/glyphicons-regular.svg#glyphiconsregular') format('svg'); 
+}
+
+* {
+    padding: 0;
+    margin: 0;
+}
+
+.icon {
+    font-family: 'glyphicons';
+}
+
+.ui-icon {
+    font-family: 'glyphicons';
+    cursor: pointer;
+    font-size: 200%;
+    text-shadow: 
+        /* repeat to create glow effect */
+        #fff 2px 2px 2px, 
+        #fff -2px -2px 2px, 
+        #fff -2px 2px 2px, 
+        #fff 2px -2px 2px,
+        #aaa 0 0 20px;
+}
+
+.ui-icon {
+    opacity: 0.3;
+}
+
+.ui-icon:hover {
+    opacity: 1;
+}
+
+.zoom-pan-btn {
+    font-size: 400%;
+}
+
+.days-line {
+    font-family: sans-serif;
+    font-size: 90%;
+}
+
+.step-box rect[visibility="hidden"] {
+    visibility: hidden;
+}
+
+.details-icons {
+    display: none;
+}
+
+.step-box * {
+    cursor: pointer;
+}
+
+.step-box rect.highlight {
+    opacity: 0;
+    fill: #222;
+    transition: opacity .15s ease-in-out;
+    -moz-transition: opacity .15s ease-in-out;
+    -webkit-transition: opacity .15s ease-in-out;
+}
+
+.step-box:hover rect.highlight {
+    opacity: 1;
+}
+
+.step-box text.label {
+    display: none;
+    font-family: sans-serif;
+}
+
+.dragbox {
+    cursor: ew-resize; /* ie  */
+    cursor: -webkit-grab;
+    cursor: grab;
+}
+
+
+svg[dragging="true"] .dragbox {
+    cursor: -webkit-grabbing;
+    cursor: grabbing;
+}
+
+.week-box text.weeknr-text, .month-box text.month-text {
+    font-family: sans-serif;
+    font-weight: normal;
+    font-size: 110%;
+}
+
+.week-box text.datespan, .month-box text.year-text {
+    font-family: sans-serif;
+    font-size: 80%;
+}
+
+.week-box text.day {
+    font-family: sans-serif;
+    font-size: 80%;
+}
+
+.tick-box text {
+    font-family: sans-serif;
+    font-size: 80%;
+}
+
+.top-outline {
+    fill: none;
+    stroke: red;
+    stroke-width: 2px;
+}
+
+.now-indicator {
+    fill: none;
+    stroke: greenyellow;
+    stroke-width: 5px;
+}
+
+#calendar {
+    margin: 10px;
+}
+
+#calendar svg {
+    overflow: hidden;
+    background-color: white;
+}
+
+body {
+    text-align:center;
+    background-color: skyblue;
+}
+</style>
+</head>
+<body>
+<div id="calendar"></div>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+
+<script src="lib.js"></script>
+<script src="chart/base.js"></script>
+<script src="chart/timeline.js"></script>
+<script src="chart/events.js"></script>
+<script src="chart/details.js"></script>
+</body>
+</html>

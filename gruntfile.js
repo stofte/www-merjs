@@ -125,8 +125,8 @@ module.exports = function(grunt) {
 	grunt.registerTask('dev', ['jade:dev']);
 	// prod-test == localhost with minified content
 	grunt.registerTask('prod-test', ['cssmin:prod-test', 'uglify:prod-test', 'jade:prod-test']);
-	grunt.registerTask('prod-debug', ['clean', 'copy:prod-debug', 'jade:prod-debug']);
+	grunt.registerTask('prod-debug', ['copy:prod-debug', 'jade:prod-debug']);
 	// prod === aws
-	grunt.registerTask('prod', ['clean','cssmin:prod', 'uglify:prod', 'jade:prod']);
+	grunt.registerTask('prod', ['cssmin:prod', 'uglify:prod', 'jade:prod']);
 
 };
