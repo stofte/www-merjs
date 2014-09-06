@@ -1,4 +1,5 @@
 todo:
+- enviroment.config doesnt generate an entry in the eb config panel.
 - port mapping is strange. /opt/elasticbeanstalk/deploy/configuration/containerconfiguration contains port numbers, but dont know significance. 
 
 AWSCLI tools:
