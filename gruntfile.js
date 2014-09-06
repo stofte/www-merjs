@@ -12,10 +12,17 @@ module.exports = function(grunt) {
 
 	var conf = {
 		connect: {
-			server: {
+			src: {
 				options: {
 					port: 80,
 					base: 'src',
+					keepalive: true
+				}
+			},
+			www: {
+				options: {
+					port: 80,
+					base: 'www',
 					keepalive: true
 				}
 			}
@@ -97,7 +104,6 @@ module.exports = function(grunt) {
 			'prod': {
 				options: {
 					data: {
-
 						env: 'prod'
 					}
 				},
